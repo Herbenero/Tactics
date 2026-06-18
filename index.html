@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactics Cricket Dart Game</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e74c3c;
+            --highlight: #f1c40f;
+            --bg: #ecf0f1;
+            --board-bg: #fff;
+            --text: #333;
+            --closed: #95a5a6;
+            --open: #fff;
+            --border: #bdc3c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 { color: var(--primary); margin-bottom: 10px; }
+
+        /* Setup Section */
+        #setup-screen {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 80%;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        button:active { transform: scale(0.98); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-action { background-color: var(--accent); color: white; width: 100%; margin: 5px 0; }
+        .btn-undo { background-color: #7f8c8d; color: white; }
+        .btn-miss { background-color: #c0392b; color: white; }
+
+        /* Game Screen */
+        #game-screen {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .player-card {
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .player-card.active {
+            border-color: var(--highlight);
+            background-color: #fff9c4;
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3);
+        }
+
+        .player-name { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; }
+        .player-score { font-size: 1.5em; font-weight: bold; color: var(--primary); }
+
+        /* Game Board */
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .target {
+            background: var(--board-bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .target.closed {
+            background: var(--closed);
+            color: white;
+            border-color: var(--closed);
+        }
+
+        .target-header {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .target-counts {
+            display: flex;
+            justify-content: space-around;
+            font-size: 1.2em;
+        }
+
+        .count-box { width: 30%; }
+        
+        .bull {
+            border-radius: 50%;
+            height: 100px;
+            width: 100px;
+            margin: 0 auto;
+            background: radial-gradient(circle, #27ae60 30%, #c0392b 30%, #c0392b 60%, #27ae60 60%);
+            border: 2px solid #333;
+        }
+        .bull.closed { background: #555; }
+
+        /* Controls */
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .dialer-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .dialer-btn {
+            padding: 10px;
+            background: #3498db;
+            color: white;
+            border-radius: 6px;
+            font-size: 1.1em;
+        }
+
+        .mode-btn {
+            padding: 8px;
+            background: #9b59b6;
+            color: white;
+            font-size: 0.9em;
+        }
+        
+        .mode-btn.active {
+            background: #2c3e50;
+            border: 2px solid var(--highlight);
+        }
+
+        /* Winner Banner */
+        #winner-banner {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+        }
+
+        #winner-banner h2 { font-size: 3em; color: var(--highlight); margin: 0; }
+        #winner-banner p { font-size: 1.5em; margin: 20px 0; }
+        
+        .final-score-display {
+            background: white;
+            color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            min-width: 300px;
+        }
+
+        .winner-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2em;
+            margin: 10px 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .winner-name { color: var(--accent); font-weight: bold; }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .controls { grid-template-columns: 1fr; }
+            .dialer-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tactics Cricket</h1>
+
+    <!-- Setup Screen -->
+    <div id="setup-screen">
+        <h3>Game Setup</h3>
+        <input type="text" id="p1-name" placeholder="Player 1 Name" value="Player 1">
+        <input type="text" id="p2-name" placeholder="Player 2 Name" value="Player 2">
+        <br>
+        <button class="btn-primary" onclick="startGame()">Start Game</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen">
+        <!-- Scoreboard -->
+        <div class="scoreboard" id="scoreboard">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Targets -->
+        <div class="board-grid" id="target-board">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div>
+                <h4>Current Turn</h4>
+                <div id="turn-indicator" style="font-size: 1.2em; margin-bottom: 10px; font-weight: bold;">Player 1</div>
+                
+                <div class="dialer-grid">
+                    <button class="dialer-btn" onclick="setTarget(1)">1</button>
+                    <button class="dialer-btn" onclick="setTarget(2)">2</button>
+                    <button class="dialer-btn" onclick="setTarget(3)">3</button>
+                    <button class="dialer-btn" onclick="setTarget(4)">4</button>
+                    <button class="dialer-btn" onclick="setTarget(5)">5</button>
+                    <button class="dialer-btn" onclick="setTarget(6)">6</button>
+                    <button class="dialer-btn" onclick="setTarget(7)">7</button>
+                    <button class="dialer-btn" onclick="setTarget(8)">8</button>
+                    <button class="dialer-btn" onclick="setTarget(9)">9</button>
+                    <button class="dialer-btn" onclick="setTarget(10)">10</button>
+                    <button class="dialer-btn" onclick="setTarget(11)">11</button>
+                    <button class="dialer-btn" onclick="setTarget(12)">12</button>
+                    <button class="dialer-btn" onclick="setTarget(13)">13</button>
+                    <button class="dialer-btn" onclick="setTarget(14)">14</button>
+                    <button class="dialer-btn" onclick="setTarget(15)">15</button>
+                    <button class="dialer-btn" onclick="setTarget(16)">16</button>
+                    <button class="dialer-btn" onclick="setTarget(17)">17</button>
+                    <button class="dialer-btn" onclick="setTarget(18)">18</button>
+                    <button class="dialer-btn" onclick="setTarget(19)">19</button>
+                    <button class="dialer-btn" onclick="setTarget(20)">20</button>
+                    <button class="dialer-btn" style="background:#27ae60" onclick="setTarget('bull')">Bull</button>
+                </div>
+            </div>
+
+            <div>
+                <h4>Actions</h4>
+                <div style="margin-bottom: 10px;">
+                    <span>Mode: </span>
+                    <button class="mode-btn active" id="mode-single" onclick="setMode('single')">Single</button>
+                    <button class="mode-btn" id="mode-double" onclick="setMode('double')">Double</button>
+                    <button class="mode-btn" id="mode-triple" onclick="setMode('triple')">Triple</button>
+                </div>
+                
+                <button class="btn-action" onclick="submitShot()">Throw Darts (3)</button>
+                <div style="text-align: center; margin: 5px 0; font-size: 0.9em; color: #666;">Per throw</div>
+
+                <button class="btn-undo" onclick="undoLastThrow()">Undo Last Throw</button>
+                <button class="btn-miss" onclick="submitMiss()">Miss / Pass</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Winner Banner -->
+    <div id="winner-banner">
+        <h2 id="winner-text">PLAYER 1 WINS!</h2>
+        <div class="final-score-display">
+            <h3>Final Scoreboard</h3>
+            <div id="final-scores"></div>
+        </div>
+        <button class="btn-primary" onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script>
+        // Game State
+        const TARGETS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 'bull'];
+        let players = [];
+        let currentPlayerIndex = 0;
+        let lastGameState = null; // For undo
+        let gameActive = false;
+
+        // UI State
+        let currentTarget = null;
+        let currentMode = 'single'; // single, double, triple
+
+        function startGame() {
+            const p1Name = document.getElementById('p1-name').value || 'Player 1';
+            const p2Name = document.getElementById('p2-name').value || 'Player 2';
+
+            players = [
+                { id: 'p1', name: p1Name, score: 0, counts: {10:0, 11:0, 12:0, 13:0, 14:0, 15:0, 16:0, 17:0, 18:0, 19:0, 20:0, bull:0}, closed: false },
+                { id: 'p2', name: p2Name, score: 0, counts: {10:0, 11:0, 12:0, 13:0, 12:0, 14:0, 15:0, 16:0, 17:0, 18:0, 19:0, 20:0, bull:0}, closed: false }
+            ];
+
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            
+            renderBoard();
+            renderScoreboard();
+            gameActive = true;
+            updateTurnIndicator();
+        }
+
+        function setTarget(target) {
+            currentTarget = target;
+            // Visual feedback could be added here
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            // Update UI buttons
+            document.getElementById('mode-single').classList.toggle('active', mode === 'single');
+            document.getElementById('mode-double').classList.toggle('active', mode === 'double');
+            document.getElementById('mode-triple').classList.toggle('active', mode === 'triple');
+        }
+
+        function saveState() {
+            lastGameState = {
+                players: JSON.parse(JSON.stringify(players)),
+                currentPlayerIndex: currentPlayerIndex,
+                currentTarget: currentTarget,
+                currentMode: currentMode
+            };
+        }
+
+        function undoLastThrow() {
+            if (!lastGameState) return;
+            players = lastGameState.players;
+            currentPlayerIndex = lastGameState.currentPlayerIndex;
+            currentTarget = lastGameState.currentTarget;
+            currentMode = lastGameState.currentMode;
+            
+            renderBoard();
+            renderScoreboard();
+            updateTurnIndicator();
+        }
+
+        function submitMiss() {
+            saveState();
+            endTurn();
+        }
+
+        function submitShot() {
+            if (!currentTarget) {
+                alert("Please select a target (1-20 or Bull) first.");
+                return;
+            }
+
+            // Simulate 3 darts logic
+            // In a real app, you might click buttons 3 times. 
+            // Here, we assume the user enters their result for all 3 darts in this action.
+            // However, the prompt says "Each round is 3 darts".
+            // Let's implement a simple flow: The user clicks "Throw Darts" and we assume they entered the result 
+            // OR we provide a way to enter 3 separate shots.
+            
+            // Simplified approach for webapp: 
+            // We will ask the user to enter points for 3 darts sequentially or just process one shot?
+            // Prompt says "Display buttons... Undo and Miss".
+            // Let's implement: Click target -> Click Mode -> Click "Throw" -> Prompt for points -> Repeat 3 times?
+            // Better UX: Click "Throw Darts" -> Prompt "Enter points for Dart 1" -> Update -> "Dart 2" -> Update -> "Dart 3" -> Update -> End Turn.
+            
+            // Let's stick to a simpler flow: 
+            // The user selects a target. 
+            // They click "Throw". 
+            // We open a prompt for "Points scored" (0 to 20 * mode).
+            // They click 3 times? No, that's tedious.
+            
+            // Alternative: The user clicks the target, then clicks 1, 2, or 3 to indicate how many darts hit that target?
+            // No, standard cricket: You hit specific numbers.
+            
+            // Let's use a simple input method for the shot value.
+            // Wait, the prompt says "Display buttons for 1-20 + Bull".
+            // This implies the interface is for selecting what you HIT.
+            
+            // Revised Flow:
+            // 1. Select Target (e.g., 20)
+            // 2. Select Mode (e.g., Single)
+            // 3. Click "Throw" -> This is ONE dart.
+            // 4. Repeat for 3 darts.
+            // 5. "Undo" reverts the last dart.
+            // 6. "Miss" skips the turn immediately.
+            
+            // Let's implement the 1-dart-at-a-time flow.
+            
+            // Wait, the prompt says "Each round is 3 darts".
+            // If I make them click "Throw" 3 times, that works.
+            // But I need to know the points. 
+            // Usually, you just say "I hit a single 20".
+            // So: Select Target -> Select Mode -> Click "Throw".
+            // But wait, if I hit a single 20, I get 1 point. If I hit a double 20, I get 2.
+            // The user needs to know if they hit it or missed it.
+            
+            // Let's refine:
+            // User selects Target (20).
+            // User selects Mode (Single).
+            // User clicks "Throw".
+            // We assume they hit it? No, they might have missed.
+            // Let's add a "Miss" button next to the throw?
+            // Or, simpler: The user clicks "Target" then "Mode" then "Throw". 
+            // We assume they hit it? No, that's not cricket.
+            
+            // Let's go with: 
+            // User selects Target.
+            // User selects Mode.
+            // User clicks "Throw".
+            // We prompt: "How many points? (0 for miss, or points based on mode)"
+            // No, that's too complex.
+            
+            // Let's try: 
+            // User selects Target (20).
+            // User selects Mode (Single).
+            // User clicks "Throw".
+            // We assume this is ONE dart.
+            // We need to know if they HIT.
+            // Let's add a "Hit" and "Miss" confirmation?
+            
+            // Actually, let's keep it simple: 
+            // Target + Mode = What they INTEND to hit.
+            // "Throw" = They hit it.
+            // "Miss" = They missed the whole turn.
+            // "Undo" = Revert last hit.
+            // This implies you can't miss a single dart unless you click "Miss" which ends the turn?
+            // That's a bit restrictive.
+            
+            // Let's do this:
+            // User selects Target.
+            // User selects Mode.
+            // User clicks "Throw".
+            // We ask: "Did you hit it?"
+            // If Yes -> Add points.
+            // If No -> Do nothing (but consume dart).
+            
+            // Okay, let's implement the "Did you hit it?" prompt.
+            
+            if (!confirm(`Throw ${currentMode} ${currentTarget}?`)) return;
+            
+            // Logic for 3 darts
+            let dartsLeft = 3;
+            let dartIndex = 0;
+
+            function processDart() {
+                if (dartIndex >= 3) {
+                    endTurn();
+                    return;
+                }
+
+                // Simple prompt for "Did you hit it?"
+                const hit = confirm(`Dart ${dartIndex + 1}: Did you hit ${currentMode} ${currentTarget}?`);
+                
+                if (hit) {
+                    applyShot(currentTarget, currentMode, players[currentPlayerIndex]);
+                }
+                
+                dartIndex++;
+                processDart();
+            }
+
+            processDart();
+        }
+
+        function applyShot(target, mode, player) {
+            let points = 0;
+            let multiplier = 1;
+            if (mode === 'double') multiplier = 2;
+            if (mode === 'triple') multiplier = 3;
+            points = (target === 'bull') ? 1 : target; // Bull is usually 1 or 2, let's say 1 for simplicity or treat as 25/50?
+            // Standard Cricket: Bullseye is often treated as 25 (Single) and 50 (Double). 
+            // To simplify, let's treat Bull as "1" for single, "2" for double? 
+            // Or just "1" point per hit for bull.
+            // Let's stick to simple: Bull counts as 1 point for single, 2 for double, 3 for triple.
+            
+            if (target === 'bull') {
+                points = 1; 
+            }
+
+            // Scoring Logic
+            // 1. If target is open (both players 0): 
+            //    - Set player count to 1.
+            //    - Add points.
+            // 2. If target is closed (both players > 0):
+            //    - Add points.
+            // 3. If target is open (opponent has > 0):
+            //    - Set player count to opponent's count.
+            //    - Add points.
+            // 4. If target is closed (opponent has > 0):
+            //    - Add points.
+
+            // Standard Cricket Rules:
+            // - To "close" a number, you must hit it 3 times.
+            // - If you hit a number the opponent has closed, you get points but don't close it further (unless you haven't closed it yet).
+            // - If you hit an open number, you close it (count becomes 1). If opponent has it closed, you take over (count = opponent count).
+            // - If you hit a number opponent has open (count > 0), you match their count.
+
+            let currentCount = player.counts[target];
+            let opponent = players.find(p => p.id !== player.id);
+            let oppCount = opponent.counts[target];
+
+            // Check if target is already closed for this player
+            let isClosed = currentCount >= 3;
+
+            if (isClosed) {
+                // Already closed, just add points
+                player.score += points * multiplier;
+            } else {
+                // Not closed
+                if (oppCount === 0) {
+                    // Target open for opponent too
+                    player.counts[target] = currentCount + 1;
+                    player.score += points * multiplier;
+                } else {
+                    // Opponent has it open
+                    player.counts[target] = oppCount;
+                    player.score += points * multiplier;
+                }
+            }
+
+            // Check if player closed it
+            if (player.counts[target] >= 3) {
+                player.closed = true; // Flag for UI
+            }
+        }
+
+        function endTurn() {
+            // Check if all targets closed
+            const allClosed = players.every(p => {
+                return TARGETS.every(t => p.counts[t] >= 3);
+            });
+
+            if (allClosed) {
+                declareWinner();
+                return;
+            }
+
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            renderBoard();
+            renderScoreboard();
+            updateTurnIndicator();
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('target-board');
+            board.innerHTML = '';
+
+            TARGETS.forEach(target => {
+                const div = document.createElement('div');
+                const p1Closed = players.counts[target] >= 3;
+                const p2Closed = players.counts[target] >= 3;
+                const isClosed = p1Closed && p2Closed;
+
+                div.className = `target ${isClosed ? 'closed' : ''}`;
+                
+                // If target is Bull
+                if (target === 'bull') {
+                    div.className += ' bull';
+                    // Inner content for bull
+                    const bullContent = document.createElement('div');
+                    bullContent.className = 'target-header';
+                    bullContent.innerText = 'Bull';
+                    div.appendChild(bullContent);
+                    
+                    const countsDiv = document.createElement('div');
+                    countsDiv.className = 'target-counts';
+                    
+                    countsDiv.innerHTML = `
+                        <div class="count-box">${players.counts[target]}</div>
+                        <div class="count-box">${players.counts[target]}</div>
+                    `;
+                    div.appendChild(countsDiv);
+                } else {
+                    const header = document.createElement('div');
+                    header.className = 'target-header';
+                    header.innerText = target;
+                    div.appendChild(header);
+
+                    const countsDiv = document.createElement('div');
+                    countsDiv.className = 'target-counts';
+                    
+                    countsDiv.innerHTML = `
+                        <div class="count-box">${players.counts[target]}</div>
+                        <div class="count-box">${players.counts[target]}</div>
+                    `;
+                    div.appendChild(countsDiv);
+                }
+
+                board.appendChild(div);
+            });
+        }
+
+        function renderScoreboard() {
+            const board = document.getElementById('scoreboard');
+            board.innerHTML = '';
+
+            players.forEach((player, index) => {
+                const div = document.createElement('div');
+                div.className = `player-card ${index === currentPlayerIndex ? 'active' : ''}`;
+                div.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-score">${player.score}</div>
+                    <div style="font-size:0.8em; color:#666;">Closed: ${TARGETS.filter(t => player.counts[t] >= 3).length}/${TARGETS.length}</div>
+                `;
+                board.appendChild(div);
+            });
+        }
+
+        function updateTurnIndicator() {
+            const indicator = document.getElementById('turn-indicator');
+            indicator.innerText = `Current Turn: ${players[currentPlayerIndex].name}`;
+            indicator.style.color = players[currentPlayerIndex].name === players.name ? '#e74c3c' : '#3498db';
+        }
+
+        function declareWinner() {
+            gameActive = false;
+            let winner = null;
+            let winnerScore = -1;
+            let tie = false;
+
+            if (players.score > players.score) {
+                winner = players;
+                winnerScore = players.score;
+            } else if (players.score > players.score) {
+                winner = players;
+                winnerScore = players.score;
+            } else {
+                tie = true;
+            }
+
+            const banner = document.getElementById('winner-banner');
+            const winnerText = document.getElementById('winner-text');
+            const finalScores = document.getElementById('final-scores');
+
+            if (tie) {
+                winnerText.innerText = "IT'S A TIE!";
+                winnerText.style.color = "#f1c40f";
+            } else {
+                winnerText.innerText = `${winner.name} WINS!`;
+                winnerText.style.color = "#2ecc71";
+            }
+
+            let html = '';
+            players.forEach(p => {
+                html += `
+                    <div class="winner-row">
+                        <span class="${p === winner ? 'winner-name' : ''}">${p.name}</span>
+                        <span>${p.score} Points</span>
+                    </div>
+                `;
+            });
+            finalScores.innerHTML = html;
+
+            banner.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
