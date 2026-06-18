@@ -267,6 +267,30 @@ svg {
 <body>
 
 <div id="app">
+<!-- PLAYER SETUP PANEL -->
+<div id="playerSetupPanel" style="
+    background: var(--hc-panel);
+    border: 1px solid var(--hc-border);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+">
+    <h2 style="color: var(--hc-accent); margin-bottom: 10px;">Players</h2>
+
+    <div id="playerList"></div>
+
+    <button id="addPlayerBtn" class="tourneyButton">Add Player</button>
+    <button id="startGameBtn" class="tourneyButton" style="background: var(--hc-accent); color: black;">
+        Start Game
+    </button>
+</div>
+
+<!-- GAME CONTROL BUTTONS -->
+<div id="gameControlPanel" style="display:none; margin-bottom:20px;">
+    <button id="newGameBtn" class="tourneyButton">New Game</button>
+    <button id="undoBtn" class="tourneyButton">Undo</button>
+    <button id="tourneyBtn" class="tourneyButton">Tournament Mode</button>
+</div>
 
     <!-- HEADER -->
     <div id="header">
