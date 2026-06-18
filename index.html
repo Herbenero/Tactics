@@ -1,706 +1,798 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tactics Cricket Dart Game</title>
-    <style>
-        :root {
-            --primary: #2c3e50;
-            --accent: #e74c3c;
-            --highlight: #f1c40f;
-            --bg: #ecf0f1;
-            --board-bg: #fff;
-            --text: #333;
-            --closed: #95a5a6;
-            --open: #fff;
-            --border: #bdc3c7;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+<title>Tactics Ultra — Hellcastle Edition</title>
 
-        h1 { color: var(--primary); margin-bottom: 10px; }
+<!-- 
+===========================================================
+    TACTICS ULTRA — CHUNK 1
+    HTML + HEAD + GLOBAL CSS + ANIMATIONS + LAYOUT
+    (Commented for clarity)
+===========================================================
+-->
 
-        /* Setup Section */
-        #setup-screen {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-        }
+<style>
 
-        input {
-            padding: 10px;
-            margin: 10px 0;
-            width: 80%;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 16px;
-        }
+/* ---------------------------------------------------------
+   HELLCASTLE COLOR PALETTE
+--------------------------------------------------------- */
+:root {
+    --hc-bg: #0d0d0f;
+    --hc-panel: #1a1a1d;
+    --hc-accent: #ff009d;       /* Hard magenta glow */
+    --hc-accent-soft: #ff4ec2;
+    --hc-text: #f2f2f5;
+    --hc-text-dim: #b8b8c2;
+    --hc-border: #2a2a2e;
+    --hc-green: #00ff88;
+    --hc-red: #ff3355;
+    --hc-yellow: #ffe066;
+}
 
-        button {
-            cursor: pointer;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            transition: transform 0.1s, opacity 0.2s;
-        }
+/* ---------------------------------------------------------
+   GLOBAL RESET
+--------------------------------------------------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
 
-        button:active { transform: scale(0.98); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+body {
+    background: var(--hc-bg);
+    color: var(--hc-text);
+    font-family: Arial, Helvetica, sans-serif;
+    overflow-x: hidden;
+}
 
-        .btn-primary { background-color: var(--primary); color: white; }
-        .btn-action { background-color: var(--accent); color: white; width: 100%; margin: 5px 0; }
-        .btn-undo { background-color: #7f8c8d; color: white; }
-        .btn-miss { background-color: #c0392b; color: white; }
+/* ---------------------------------------------------------
+   PAGE LAYOUT
+--------------------------------------------------------- */
+#app {
+    width: 100%;
+    max-width: 1100px;
+    margin: auto;
+    padding: 20px;
+}
 
-        /* Game Screen */
-        #game-screen {
-            display: none;
-            width: 100%;
-            max-width: 800px;
-        }
+/* Header */
+#header {
+    text-align: center;
+    margin-bottom: 20px;
+}
 
-        /* Scoreboard */
-        .scoreboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+#header h1 {
+    font-size: 2.4rem;
+    color: var(--hc-accent);
+    text-shadow: 0 0 12px var(--hc-accent);
+    margin-bottom: 10px;
+}
 
-        .player-card {
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            border: 2px solid transparent;
-            transition: all 0.3s;
-        }
+/* ---------------------------------------------------------
+   TOGGLE VIEW BUTTON (Board <-> Score/Stats)
+--------------------------------------------------------- */
+#viewToggle {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0 20px 0;
+    background: var(--hc-panel);
+    border: 1px solid var(--hc-border);
+    color: var(--hc-text);
+    font-size: 1.1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
 
-        .player-card.active {
-            border-color: var(--highlight);
-            background-color: #fff9c4;
-            transform: scale(1.05);
-            box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3);
-        }
+#viewToggle:hover {
+    background: #222228;
+}
 
-        .player-name { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; }
-        .player-score { font-size: 1.5em; font-weight: bold; color: var(--primary); }
+/* ---------------------------------------------------------
+   MAIN PANELS
+--------------------------------------------------------- */
+#boardView,
+#scoreView {
+    width: 100%;
+    display: none;
+}
 
-        /* Game Board */
-        .board-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
+.activeView {
+    display: block;
+}
 
-        .target {
-            background: var(--board-bg);
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            position: relative;
-            height: 100px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
+/* ---------------------------------------------------------
+   SCOREBOARD TABLE
+--------------------------------------------------------- */
+#scoreboard {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
 
-        .target.closed {
-            background: var(--closed);
-            color: white;
-            border-color: var(--closed);
-        }
+#scoreboard th {
+    background: var(--hc-panel);
+    padding: 10px;
+    border: 1px solid var(--hc-border);
+    font-size: 0.9rem;
+}
 
-        .target-header {
-            font-size: 1.4em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
+#scoreboard td {
+    padding: 8px;
+    border: 1px solid var(--hc-border);
+    text-align: center;
+}
 
-        .target-counts {
-            display: flex;
-            justify-content: space-around;
-            font-size: 1.2em;
-        }
+.activePlayerRow {
+    background: #1f1f24;
+    color: var(--hc-accent);
+    font-weight: bold;
+    text-shadow: 0 0 6px var(--hc-accent);
+}
 
-        .count-box { width: 30%; }
-        
-        .bull {
-            border-radius: 50%;
-            height: 100px;
-            width: 100px;
-            margin: 0 auto;
-            background: radial-gradient(circle, #27ae60 30%, #c0392b 30%, #c0392b 60%, #27ae60 60%);
-            border: 2px solid #333;
-        }
-        .bull.closed { background: #555; }
+/* Closed target cell */
+.closedCell {
+    color: var(--hc-green);
+    font-weight: bold;
+}
 
-        /* Controls */
-        .controls {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
+/* ---------------------------------------------------------
+   STATS PANEL
+--------------------------------------------------------- */
+#statsPanel {
+    margin-top: 25px;
+    padding: 15px;
+    background: var(--hc-panel);
+    border: 1px solid var(--hc-border);
+    border-radius: 10px;
+}
 
-        .dialer-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 5px;
-            margin-bottom: 15px;
-        }
+#statsPanel h2 {
+    margin-bottom: 10px;
+    color: var(--hc-accent);
+    text-shadow: 0 0 8px var(--hc-accent);
+}
 
-        .dialer-btn {
-            padding: 10px;
-            background: #3498db;
-            color: white;
-            border-radius: 6px;
-            font-size: 1.1em;
-        }
+/* ---------------------------------------------------------
+   TOURNAMENT MODE UI
+--------------------------------------------------------- */
+#tournamentPanel {
+    margin-top: 30px;
+    padding: 15px;
+    background: var(--hc-panel);
+    border: 1px solid var(--hc-border);
+    border-radius: 10px;
+}
 
-        .mode-btn {
-            padding: 8px;
-            background: #9b59b6;
-            color: white;
-            font-size: 0.9em;
-        }
-        
-        .mode-btn.active {
-            background: #2c3e50;
-            border: 2px solid var(--highlight);
-        }
+#tournamentPanel h2 {
+    margin-bottom: 10px;
+    color: var(--hc-yellow);
+    text-shadow: 0 0 8px var(--hc-yellow);
+}
 
-        /* Winner Banner */
-        #winner-banner {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            color: white;
-            text-align: center;
-        }
+.tourneyButton {
+    padding: 10px 14px;
+    margin: 6px;
+    background: #222228;
+    border: 1px solid var(--hc-border);
+    color: var(--hc-text);
+    border-radius: 6px;
+    cursor: pointer;
+}
 
-        #winner-banner h2 { font-size: 3em; color: var(--highlight); margin: 0; }
-        #winner-banner p { font-size: 1.5em; margin: 20px 0; }
-        
-        .final-score-display {
-            background: white;
-            color: #333;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            min-width: 300px;
-        }
+.tourneyButton:hover {
+    background: #2d2d33;
+}
 
-        .winner-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 1.2em;
-            margin: 10px 0;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-        }
+/* ---------------------------------------------------------
+   HARD MAGENTA GLOW ANIMATION (G3-B)
+--------------------------------------------------------- */
+@keyframes hardMagentaGlow {
+    0%   { filter: drop-shadow(0 0 0px var(--hc-accent)); }
+    40%  { filter: drop-shadow(0 0 14px var(--hc-accent)); }
+    100% { filter: drop-shadow(0 0 6px var(--hc-accent)); }
+}
 
-        .winner-name { color: var(--accent); font-weight: bold; }
+.glowMagenta {
+    animation: hardMagentaGlow 0.45s ease-out forwards;
+}
 
-        /* Responsive adjustments */
-        @media (max-width: 600px) {
-            .controls { grid-template-columns: 1fr; }
-            .dialer-grid { grid-template-columns: repeat(5, 1fr); }
-        }
-    </style>
+/* ---------------------------------------------------------
+   FLASH → GLOW → LOCK ANIMATION STACK
+--------------------------------------------------------- */
+
+/* Flash white */
+@keyframes flashWhite {
+    0%   { fill: white; }
+    100% { fill: inherit; }
+}
+
+.flashWhite {
+    animation: flashWhite 0.18s ease-out;
+}
+
+/* Lock overlay fade-in */
+@keyframes lockFade {
+    0%   { opacity: 0; transform: scale(0.6); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.lockedX {
+    opacity: 0;
+    fill: var(--hc-accent);
+    filter: drop-shadow(0 0 6px var(--hc-accent));
+    animation: lockFade 0.35s ease-out forwards;
+}
+
+/* ---------------------------------------------------------
+   SVG CONTAINER
+--------------------------------------------------------- */
+#dartboardContainer {
+    width: 100%;
+    max-width: 600px;
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+svg {
+    width: 100%;
+    height: auto;
+    touch-action: manipulation;
+}
+
+/* ---------------------------------------------------------
+   RESPONSIVE RULES
+--------------------------------------------------------- */
+@media (max-width: 700px) {
+    #header h1 {
+        font-size: 1.9rem;
+    }
+    #viewToggle {
+        font-size: 1rem;
+    }
+    #statsPanel, #tournamentPanel {
+        font-size: 0.9rem;
+    }
+}
+
+</style>
 </head>
+
 <body>
 
-    <h1>Tactics Cricket</h1>
+<div id="app">
 
-    <!-- Setup Screen -->
-    <div id="setup-screen">
-        <h3>Game Setup</h3>
-        <input type="text" id="p1-name" placeholder="Player 1 Name" value="Player 1">
-        <input type="text" id="p2-name" placeholder="Player 2 Name" value="Player 2">
-        <br>
-        <button class="btn-primary" onclick="startGame()">Start Game</button>
+    <!-- HEADER -->
+    <div id="header">
+        <h1>TACTICS ULTRA</h1>
+        <p style="color: var(--hc-text-dim);">Hellcastle Edition</p>
     </div>
 
-    <!-- Game Screen -->
-    <div id="game-screen">
-        <!-- Scoreboard -->
-        <div class="scoreboard" id="scoreboard">
-            <!-- Populated by JS -->
-        </div>
+    <!-- TOGGLE VIEW BUTTON -->
+    <button id="viewToggle">Show Score / Stats</button>
 
-        <!-- Targets -->
-        <div class="board-grid" id="target-board">
-            <!-- Populated by JS -->
-        </div>
+    <!-- BOARD VIEW (default) -->
+    <div id="boardView" class="activeView">
+        <div id="dartboardContainer">
+            <!-- =========================================================
+     CHUNK 2A — REALISTIC PDC SVG DARTBOARD (PART 1)
+     GL2 MODE — Glow/Lock applied directly to segment paths
+========================================================= -->
 
-        <!-- Controls -->
-        <div class="controls">
-            <div>
-                <h4>Current Turn</h4>
-                <div id="turn-indicator" style="font-size: 1.2em; margin-bottom: 10px; font-weight: bold;">Player 1</div>
-                
-                <div class="dialer-grid">
-                    <button class="dialer-btn" onclick="setTarget(1)">1</button>
-                    <button class="dialer-btn" onclick="setTarget(2)">2</button>
-                    <button class="dialer-btn" onclick="setTarget(3)">3</button>
-                    <button class="dialer-btn" onclick="setTarget(4)">4</button>
-                    <button class="dialer-btn" onclick="setTarget(5)">5</button>
-                    <button class="dialer-btn" onclick="setTarget(6)">6</button>
-                    <button class="dialer-btn" onclick="setTarget(7)">7</button>
-                    <button class="dialer-btn" onclick="setTarget(8)">8</button>
-                    <button class="dialer-btn" onclick="setTarget(9)">9</button>
-                    <button class="dialer-btn" onclick="setTarget(10)">10</button>
-                    <button class="dialer-btn" onclick="setTarget(11)">11</button>
-                    <button class="dialer-btn" onclick="setTarget(12)">12</button>
-                    <button class="dialer-btn" onclick="setTarget(13)">13</button>
-                    <button class="dialer-btn" onclick="setTarget(14)">14</button>
-                    <button class="dialer-btn" onclick="setTarget(15)">15</button>
-                    <button class="dialer-btn" onclick="setTarget(16)">16</button>
-                    <button class="dialer-btn" onclick="setTarget(17)">17</button>
-                    <button class="dialer-btn" onclick="setTarget(18)">18</button>
-                    <button class="dialer-btn" onclick="setTarget(19)">19</button>
-                    <button class="dialer-btn" onclick="setTarget(20)">20</button>
-                    <button class="dialer-btn" style="background:#27ae60" onclick="setTarget('bull')">Bull</button>
-                </div>
-            </div>
+<svg id="dartboard" viewBox="0 0 1000 1000">
 
-            <div>
-                <h4>Actions</h4>
-                <div style="margin-bottom: 10px;">
-                    <span>Mode: </span>
-                    <button class="mode-btn active" id="mode-single" onclick="setMode('single')">Single</button>
-                    <button class="mode-btn" id="mode-double" onclick="setMode('double')">Double</button>
-                    <button class="mode-btn" id="mode-triple" onclick="setMode('triple')">Triple</button>
-                </div>
-                
-                <button class="btn-action" onclick="submitShot()">Throw Darts (3)</button>
-                <div style="text-align: center; margin: 5px 0; font-size: 0.9em; color: #666;">Per throw</div>
+    <!-- BACKGROUND -->
+    <circle cx="500" cy="500" r="500" fill="#000" />
 
-                <button class="btn-undo" onclick="undoLastThrow()">Undo Last Throw</button>
-                <button class="btn-miss" onclick="submitMiss()">Miss / Pass</button>
-            </div>
-        </div>
-    </div>
+    <!-- INNER BULL (50) -->
+    <circle id="seg-Bull-D" cx="500" cy="500" r="30" fill="#d22" stroke="#111" stroke-width="2" />
 
-    <!-- Winner Banner -->
-    <div id="winner-banner">
-        <h2 id="winner-text">PLAYER 1 WINS!</h2>
-        <div class="final-score-display">
-            <h3>Final Scoreboard</h3>
-            <div id="final-scores"></div>
-        </div>
-        <button class="btn-primary" onclick="location.reload()">Play Again</button>
-    </div>
+    <!-- OUTER BULL (25) -->
+    <circle id="seg-Bull-S" cx="500" cy="500" r="60" fill="#2b2b2b" stroke="#111" stroke-width="2" />
 
-    <script>
-        // Game State
-        const TARGETS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 'bull'];
-        let players = [];
-        let currentPlayerIndex = 0;
-        let lastGameState = null; // For undo
-        let gameActive = false;
+    <!-- =========================================================
+         WEDGES 20 → 11
+         Each wedge group contains:
+         - Single Outer (SO)
+         - Triple (T)
+         - Single Inner (SI)
+         - Double (D)
+         IDs follow: seg-20-SO, seg-20-T, seg-20-SI, seg-20-D
+    ========================================================= -->
 
-        // UI State
-        let currentTarget = null;
-        let currentMode = 'single'; // single, double, triple
+    <!-- 20 -->
+    <g id="num-20" transform="rotate(0 500 500)">
+        <path id="seg-20-SO" d="M500,500 L500,80 A420,420 0 0,1 657,118 Z" fill="#f2e9d0" />
+        <path id="seg-20-T"  d="M500,500 L657,118 A290,290 0 0,1 580,100 Z" fill="#d22" />
+        <path id="seg-20-SI" d="M500,500 L580,100 A260,260 0 0,1 540,92 Z" fill="#1a1a1a" />
+        <path id="seg-20-D"  d="M500,500 L540,92 A450,450 0 0,1 657,118 Z" fill="#0a0" />
+    </g>
 
-        function startGame() {
-            const p1Name = document.getElementById('p1-name').value || 'Player 1';
-            const p2Name = document.getElementById('p2-name').value || 'Player 2';
+    <!-- 1 -->
+    <g id="num-1" transform="rotate(18 500 500)">
+        <path id="seg-1-SO" d="M500,500 L657,118 A420,420 0 0,1 785,215 Z" fill="#1a1a1a" />
+        <path id="seg-1-T"  d="M500,500 L785,215 A290,290 0 0,1 720,160 Z" fill="#0a0" />
+        <path id="seg-1-SI" d="M500,500 L720,160 A260,260 0 0,1 690,140 Z" fill="#f2e9d0" />
+        <path id="seg-1-D"  d="M500,500 L690,140 A450,450 0 0,1 785,215 Z" fill="#d22" />
+    </g>
 
-            players = [
-                { id: 'p1', name: p1Name, score: 0, counts: {10:0, 11:0, 12:0, 13:0, 14:0, 15:0, 16:0, 17:0, 18:0, 19:0, 20:0, bull:0}, closed: false },
-                { id: 'p2', name: p2Name, score: 0, counts: {10:0, 11:0, 12:0, 13:0, 12:0, 14:0, 15:0, 16:0, 17:0, 18:0, 19:0, 20:0, bull:0}, closed: false }
-            ];
+    <!-- 18 -->
+    <g id="num-18" transform="rotate(36 500 500)">
+        <path id="seg-18-SO" d="M500,500 L785,215 A420,420 0 0,1 860,350 Z" fill="#f2e9d0" />
+        <path id="seg-18-T"  d="M500,500 L860,350 A290,290 0 0,1 820,260 Z" fill="#d22" />
+        <path id="seg-18-SI" d="M500,500 L820,260 A260,260 0 0,1 800,230 Z" fill="#1a1a1a" />
+        <path id="seg-18-D"  d="M500,500 L800,230 A450,450 0 0,1 860,350 Z" fill="#0a0" />
+    </g>
 
-            document.getElementById('setup-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'block';
-            
-            renderBoard();
-            renderScoreboard();
-            gameActive = true;
-            updateTurnIndicator();
+    <!-- 4 -->
+    <g id="num-4" transform="rotate(54 500 500)">
+        <path id="seg-4-SO" d="M500,500 L860,350 A420,420 0 0,1 890,500 Z" fill="#1a1a1a" />
+        <path id="seg-4-T"  d="M500,500 L890,500 A290,290 0 0,1 870,420 Z" fill="#0a0" />
+        <path id="seg-4-SI" d="M500,500 L870,420 A260,260 0 0,1 860,390 Z" fill="#f2e9d0" />
+        <path id="seg-4-D"  d="M500,500 L860,390 A450,450 0 0,1 890,500 Z" fill="#d22" />
+    </g>
+
+    <!-- 13 -->
+    <g id="num-13" transform="rotate(72 500 500)">
+        <path id="seg-13-SO" d="M500,500 L890,500 A420,420 0 0,1 860,650 Z" fill="#f2e9d0" />
+        <path id="seg-13-T"  d="M500,500 L860,650 A290,290 0 0,1 870,580 Z" fill="#d22" />
+        <path id="seg-13-SI" d="M500,500 L870,580 A260,260 0 0,1 860,550 Z" fill="#1a1a1a" />
+        <path id="seg-13-D"  d="M500,500 L860,550 A450,450 0 0,1 890,500 Z" fill="#0a0" />
+    </g>
+
+    <!-- 6 -->
+    <g id="num-6" transform="rotate(90 500 500)">
+        <path id="seg-6-SO" d="M500,500 L860,650 A420,420 0 0,1 785,785 Z" fill="#1a1a1a" />
+        <path id="seg-6-T"  d="M500,500 L785,785 A290,290 0 0,1 820,720 Z" fill="#0a0" />
+        <path id="seg-6-SI" d="M500,500 L820,720 A260,260 0 0,1 800,690 Z" fill="#f2e9d0" />
+        <path id="seg-6-D"  d="M500,500 L800,690 A450,450 0 0,1 860,650 Z" fill="#d22" />
+    </g>
+
+    <!-- 10 -->
+    <g id="num-10" transform="rotate(108 500 500)">
+        <path id="seg-10-SO" d="M500,500 L785,785 A420,420 0 0,1 657,882 Z" fill="#f2e9d0" />
+        <path id="seg-10-T"  d="M500,500 L657,882 A290,290 0 0,1 720,840 Z" fill="#d22" />
+        <path id="seg-10-SI" d="M500,500 L720,840 A260,260 0 0,1 690,820 Z" fill="#1a1a1a" />
+        <path id="seg-10-D"  d="M500,500 L690,820 A450,450 0 0,1 785,785 Z" fill="#0a0" />
+    </g>
+
+    <!-- 15 -->
+    <g id="num-15" transform="rotate(126 500 500)">
+        <path id="seg-15-SO" d="M500,500 L657,882 A420,420 0 0,1 500,920 Z" fill="#1a1a1a" />
+        <path id="seg-15-T"  d="M500,500 L500,920 A290,290 0 0,1 580,900 Z" fill="#0a0" />
+        <path id="seg-15-SI" d="M500,500 L580,900 A260,260 0 0,1 540,890 Z" fill="#f2e9d0" />
+        <path id="seg-15-D"  d="M500,500 L540,890 A450,450 0 0,1 657,882 Z" fill="#d22" />
+    </g>
+
+    <!-- 2 -->
+    <g id="num-2" transform="rotate(144 500 500)">
+        <path id="seg-2-SO" d="M500,500 L500,920 A420,420 0 0,1 343,882 Z" fill="#f2e9d0" />
+        <path id="seg-2-T"  d="M500,500 L343,882 A290,290 0 0,1 420,900 Z" fill="#d22" />
+        <path id="seg-2-SI" d="M500,500 L420,900 A260,260 0 0,1 460,890 Z" fill="#1a1a1a" />
+        <path id="seg-2-D"  d="M500,500 L460,890 A450,450 0 0,1 500,920 Z" fill="#0a0" />
+    </g>
+
+    <!-- 17 -->
+    <g id="num-17" transform="rotate(162 500 500)">
+        <path id="seg-17-SO" d="M500,500 L343,882 A420,420 0 0,1 215,785 Z" fill="#1a1a1a" />
+        <path id="seg-17-T"  d="M500,500 L215,785 A290,290 0 0,1 280,840 Z" fill="#0a0" />
+        <path id="seg-17-SI" d="M500,500 L280,840 A260,260 0 0,1 310,820 Z" fill="#f2e9d0" />
+        <path id="seg-17-D"  d="M500,500 L310,820 A450,450 0 0,1 343,882 Z" fill="#d22" />
+    </g>
+
+    <!-- 3 -->
+    <g id="num-3" transform="rotate(180 500 500)">
+        <path id="seg-3-SO" d="M500,500 L215,785 A420,420 0 0,1 140,650 Z" fill="#f2e9d0" />
+        <path id="seg-3-T"  d="M500,500 L140,650 A290,290 0 0,1 180,720 Z" fill="#d22" />
+        <path id="seg-3-SI" d="M500,500 L180,720 A260,260 0 0,1 200,690 Z" fill="#1a1a1a" />
+        <path id="seg-3-D"  d="M500,500 L200,690 A450,450 0 0,1 215,785 Z" fill="#0a0" />
+    </g>
+
+    <!-- 19 -->
+    <g id="num-19" transform="rotate(198 500 500)">
+        <path id="seg-19-SO" d="M500,500 L140,650 A420,420 0 0,1 110,500 Z" fill="#1a1a1a" />
+        <path id="seg-19-T"  d="M500,500 L110,500 A290,290 0 0,1 130,580 Z" fill="#0a0" />
+        <path id="seg-19-SI" d="M500,500 L130,580 A260,260 0 0,1 140,610 Z" fill="#f2e9d0" />
+        <path id="seg-19-D"  d="M500,500 L140,610 A450,450 0 0,1 140,650 Z" fill="#d22" />
+    </g>
+
+    <!-- 7 -->
+    <g id="num-7" transform="rotate(216 500 500)">
+        <path id="seg-7-SO" d="M500,500 L110,500 A420,420 0 0,1 140,350 Z" fill="#f2e9d0" />
+        <path id="seg-7-T"  d="M500,500 L140,350 A290,290 0 0,1 130,420 Z" fill="#d22" />
+        <path id="seg-7-SI" d="M500,500 L130,420 A260,260 0 0,1 140,450 Z" fill="#1a1a1a" />
+        <path id="seg-7-D"  d="M500,500 L140,450 A450,450 0 0,1 110,500 Z" fill="#0a0" />
+    </g>
+
+    <!-- 16 -->
+    <g id="num-16" transform="rotate(234 500 500)">
+        <path id="seg-16-SO" d="M500,500 L140,350 A420,420 0 0,1 215,215 Z" fill="#1a1a1a" />
+        <path id="seg-16-T"  d="M500,500 L215,215 A290,290 0 0,1 180,280 Z" fill="#0a0" />
+        <path id="seg-16-SI" d="M500,500 L180,280 A260,260 0 0,1 200,310 Z" fill="#f2e9d0" />
+        <path id="seg-16-D"  d="M500,500 L200,310 A450,450 0 0,1 140,350 Z" fill="#d22" />
+    </g>
+
+    <!-- 8 -->
+    <g id="num-8" transform="rotate(252 500 500)">
+        <path id="seg-8-SO" d="M500,500 L215,215 A420,420 0 0,1 343,118 Z" fill="#f2e9d0" />
+        <path id="seg-8-T"  d="M500,500 L343,118 A290,290 0 0,1 280,160 Z" fill="#d22" />
+        <path id="seg-8-SI" d="M500,500 L280,160 A260,260 0 0,1 310,180 Z" fill="#1a1a1a" />
+        <path id="seg-8-D"  d="M500,500 L310,180 A450,450 0 0,1 215,215 Z" fill="#0a0" />
+    </g>
+
+    <!-- 11 -->
+    <g id="num-11" transform="rotate(270 500 500)">
+        <path id="seg-11-SO" d="M500,500 L343,118 A420,420 0 0,1 500,80 Z" fill="#1a1a1a" />
+        <path id="seg-11-T"  d="M500,500 L500,80 A290,290 0 0,1 420,100 Z" fill="#0a0" />
+        <path id="seg-11-SI" d="M500,500 L420,100 A260,260 0 0,1 460,92 Z" fill="#f2e9d0" />
+        <path id="seg-11-D"  d="M500,500 L460,92 A450,450 0 0,1 343,118 Z" fill="#d22" />
+    </g>
+    <!-- =========================================================
+         WEDGES 14 → 5 (SECOND HALF OF THE BOARD)
+    ========================================================= -->
+
+    <!-- 14 -->
+    <g id="num-14" transform="rotate(288 500 500)">
+        <path id="seg-14-SO" d="M500,500 L500,80 A420,420 0 0,1 343,118 Z" fill="#f2e9d0" />
+        <path id="seg-14-T"  d="M500,500 L343,118 A290,290 0 0,1 420,100 Z" fill="#d22" />
+        <path id="seg-14-SI" d="M500,500 L420,100 A260,260 0 0,1 460,92 Z" fill="#1a1a1a" />
+        <path id="seg-14-D"  d="M500,500 L460,92 A450,450 0 0,1 343,118 Z" fill="#0a0" />
+    </g>
+
+    <!-- 9 -->
+    <g id="num-9" transform="rotate(306 500 500)">
+        <path id="seg-9-SO" d="M500,500 L343,118 A420,420 0 0,1 215,215 Z" fill="#1a1a1a" />
+        <path id="seg-9-T"  d="M500,500 L215,215 A290,290 0 0,1 280,160 Z" fill="#0a0" />
+        <path id="seg-9-SI" d="M500,500 L280,160 A260,260 0 0,1 310,180 Z" fill="#f2e9d0" />
+        <path id="seg-9-D"  d="M500,500 L310,180 A450,450 0 0,1 343,118 Z" fill="#d22" />
+    </g>
+
+    <!-- 12 -->
+    <g id="num-12" transform="rotate(324 500 500)">
+        <path id="seg-12-SO" d="M500,500 L215,215 A420,420 0 0,1 140,350 Z" fill="#f2e9d0" />
+        <path id="seg-12-T"  d="M500,500 L140,350 A290,290 0 0,1 180,280 Z" fill="#d22" />
+        <path id="seg-12-SI" d="M500,500 L180,280 A260,260 0 0,1 200,310 Z" fill="#1a1a1a" />
+        <path id="seg-12-D"  d="M500,500 L200,310 A450,450 0 0,1 215,215 Z" fill="#0a0" />
+    </g>
+
+    <!-- 5 -->
+    <g id="num-5" transform="rotate(342 500 500)">
+        <path id="seg-5-SO" d="M500,500 L140,350 A420,420 0 0,1 110,500 Z" fill="#1a1a1a" />
+        <path id="seg-5-T"  d="M500,500 L110,500 A290,290 0 0,1 130,420 Z" fill="#0a0" />
+        <path id="seg-5-SI" d="M500,500 L130,420 A260,260 0 0,1 140,450 Z" fill="#f2e9d0" />
+        <path id="seg-5-D"  d="M500,500 L140,450 A450,450 0 0,1 140,350 Z" fill="#d22" />
+    </g>
+
+    <!-- =========================================================
+         NUMBER RING (PDC STANDARD ORDER)
+         Numbers: 20–1–18–4–13–6–10–15–2–17–3–19–7–16–8–11–14–9–12–5
+    ========================================================= -->
+
+    <g id="numberRing" font-family="Arial" font-size="70" fill="#ffffff" text-anchor="middle">
+
+        <text x="500" y="55">20</text>
+        <text x="640" y="85" transform="rotate(18 640 85)">1</text>
+        <text x="760" y="170" transform="rotate(36 760 170)">18</text>
+        <text x="830" y="300" transform="rotate(54 830 300)">4</text>
+        <text x="860" y="450" transform="rotate(72 860 450)">13</text>
+        <text x="830" y="600" transform="rotate(90 830 600)">6</text>
+        <text x="760" y="730" transform="rotate(108 760 730)">10</text>
+        <text x="640" y="815" transform="rotate(126 640 815)">15</text>
+        <text x="500" y="845" transform="rotate(144 500 845)">2</text>
+        <text x="360" y="815" transform="rotate(162 360 815)">17</text>
+        <text x="240" y="730" transform="rotate(180 240 730)">3</text>
+        <text x="170" y="600" transform="rotate(198 170 600)">19</text>
+        <text x="140" y="450" transform="rotate(216 140 450)">7</text>
+        <text x="170" y="300" transform="rotate(234 170 300)">16</text>
+        <text x="240" y="170" transform="rotate(252 240 170)">8</text>
+        <text x="360" y="85" transform="rotate(270 360 85)">11</text>
+        <text x="500" y="55" transform="rotate(288 500 55)">14</text>
+        <text x="640" y="85" transform="rotate(306 640 85)">9</text>
+        <text x="760" y="170" transform="rotate(324 760 170)">12</text>
+        <text x="830" y="300" transform="rotate(342 830 300)">5</text>
+
+    </g>
+
+</svg>
+
+</div> <!-- end dartboardContainer -->
+<!-- =========================================================
+     CHUNK 3 — FULL JAVASCRIPT ENGINE
+========================================================= -->
+
+<script>
+
+/* ============================================================
+   GLOBAL STATE
+=========================================================== */
+
+let players = [];
+let currentPlayer = 0;
+let roundDart = 1;
+
+let gameState = {
+    targets: {},     // per player: {20:{marks:0}, 19:{marks:0}, ...}
+    scores: {},      // per player: numeric score
+    history: [],     // undo stack
+};
+
+const TACTICS_NUMBERS = [20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1];
+
+/* ============================================================
+   INITIALIZATION
+=========================================================== */
+
+window.onload = () => {
+    initPlayers();
+    initGameState();
+    bindSVGSegments();
+    updateScoreboard();
+    setupViewToggle();
+};
+
+/* ============================================================
+   PLAYER SETUP
+=========================================================== */
+
+function initPlayers() {
+    // For now: 2 players default. You can expand later.
+    players = ["Player 1", "Player 2"];
+}
+
+function initGameState() {
+    players.forEach(p => {
+        gameState.targets[p] = {};
+        gameState.scores[p] = 0;
+
+        TACTICS_NUMBERS.forEach(n => {
+            gameState.targets[p][n] = { marks: 0 };
+        });
+
+        gameState.targets[p]["Bull-S"] = { marks: 0 };
+        gameState.targets[p]["Bull-D"] = { marks: 0 };
+    });
+}
+
+/* ============================================================
+   SVG SEGMENT BINDING
+=========================================================== */
+
+function bindSVGSegments() {
+    const allSegs = document.querySelectorAll("#dartboard path, #dartboard circle");
+
+    allSegs.forEach(seg => {
+        seg.addEventListener("click", () => handleHit(seg.id));
+    });
+}
+
+/* ============================================================
+   HANDLE HIT
+=========================================================== */
+
+function handleHit(segId) {
+    const player = players[currentPlayer];
+
+    // Save state for undo
+    pushHistory();
+
+    // Determine segment type
+    let value = parseSegmentValue(segId);
+    let marks = parseSegmentMarks(segId);
+
+    applyMarks(player, value, marks);
+
+    animateHit(segId);
+
+    advanceThrow();
+    updateScoreboard();
+}
+
+/* ============================================================
+   PARSE SEGMENT VALUE
+=========================================================== */
+
+function parseSegmentValue(segId) {
+    if (segId.includes("Bull-D")) return "Bull-D";
+    if (segId.includes("Bull-S")) return "Bull-S";
+
+    // seg-20-SO → extract 20
+    return parseInt(segId.split("-")[1]);
+}
+
+/* ============================================================
+   PARSE MARKS (SINGLE/TRIPLE/DOUBLE)
+=========================================================== */
+
+function parseSegmentMarks(segId) {
+    if (segId.includes("-T")) return 3;
+    if (segId.includes("-D")) return 2;
+    return 1;
+}
+
+/* ============================================================
+   APPLY MARKS (TACTICS RULES)
+=========================================================== */
+
+function applyMarks(player, value, marks) {
+    let target = gameState.targets[player][value];
+
+    if (!target) return;
+
+    let before = target.marks;
+    let after = before + marks;
+
+    if (after <= 3) {
+        target.marks = after;
+    } else {
+        // Score overflow
+        let overflow = after - 3;
+        target.marks = 3;
+
+        // Add scoring to player
+        let scoreValue = (value === "Bull-D") ? 50 :
+                         (value === "Bull-S") ? 25 : value;
+
+        gameState.scores[player] += overflow * scoreValue;
+    }
+}
+
+/* ============================================================
+   ANIMATION: FLASH → HARD MAGENTA GLOW → LOCK
+=========================================================== */
+
+function animateHit(segId) {
+    const seg = document.getElementById(segId);
+
+    seg.classList.remove("flashWhite","glowMagenta","lockedX");
+    void seg.offsetWidth; // restart animation
+
+    seg.classList.add("flashWhite");
+
+    setTimeout(() => {
+        seg.classList.add("glowMagenta");
+    }, 180);
+
+    // If closed, lock it
+    let value = parseSegmentValue(segId);
+    let player = players[currentPlayer];
+    let marks = gameState.targets[player][value].marks;
+
+    if (marks >= 3) {
+        setTimeout(() => {
+            seg.classList.add("lockedX");
+        }, 300);
+    }
+}
+
+/* ============================================================
+   ADVANCE THROW / PLAYER TURN
+=========================================================== */
+
+function advanceThrow() {
+    roundDart++;
+    if (roundDart > 3) {
+        roundDart = 1;
+        currentPlayer = (currentPlayer + 1) % players.length;
+    }
+}
+
+/* ============================================================
+   SCOREBOARD UPDATE
+=========================================================== */
+
+function updateScoreboard() {
+    let html = `
+        <table id="scoreboard">
+            <tr>
+                <th>Player</th>
+                <th>Score</th>
+                ${TACTICS_NUMBERS.map(n => `<th>${n}</th>`).join("")}
+                <th>Bull</th>
+            </tr>
+    `;
+
+    players.forEach((p,i) => {
+        html += `<tr class="${i===currentPlayer ? 'activePlayerRow' : ''}">
+            <td>${p}</td>
+            <td>${gameState.scores[p]}</td>
+        `;
+
+        TACTICS_NUMBERS.forEach(n => {
+            let m = gameState.targets[p][n].marks;
+            html += `<td class="${m>=3 ? 'closedCell' : ''}">${m}</td>`;
+        });
+
+        let bullMarks = gameState.targets[p]["Bull-D"].marks + gameState.targets[p]["Bull-S"].marks;
+        html += `<td class="${bullMarks>=3 ? 'closedCell' : ''}">${bullMarks}</td>`;
+
+        html += `</tr>`;
+    });
+
+    html += `</table>`;
+
+    document.getElementById("scoreView").innerHTML = html;
+}
+
+/* ============================================================
+   UNDO SYSTEM
+=========================================================== */
+
+function pushHistory() {
+    const snapshot = JSON.stringify(gameState);
+    gameState.history.push(snapshot);
+}
+
+function undo() {
+    if (gameState.history.length === 0) return;
+    const last = gameState.history.pop();
+    gameState = JSON.parse(last);
+    updateScoreboard();
+}
+
+/* ============================================================
+   VIEW TOGGLE (BOARD <-> SCORE/STATS)
+=========================================================== */
+
+function setupViewToggle() {
+    const btn = document.getElementById("viewToggle");
+    const board = document.getElementById("boardView");
+    const score = document.getElementById("scoreView");
+
+    btn.onclick = () => {
+        if (board.classList.contains("activeView")) {
+            board.classList.remove("activeView");
+            score.classList.add("activeView");
+            btn.textContent = "Show Board";
+        } else {
+            score.classList.remove("activeView");
+            board.classList.add("activeView");
+            btn.textContent = "Show Score / Stats";
         }
+    };
+}
 
-        function setTarget(target) {
-            currentTarget = target;
-            // Visual feedback could be added here
-        }
+/* ============================================================
+   LOCAL STORAGE (AUTO-SAVE)
+=========================================================== */
 
-        function setMode(mode) {
-            currentMode = mode;
-            // Update UI buttons
-            document.getElementById('mode-single').classList.toggle('active', mode === 'single');
-            document.getElementById('mode-double').classList.toggle('active', mode === 'double');
-            document.getElementById('mode-triple').classList.toggle('active', mode === 'triple');
-        }
+function saveGame() {
+    localStorage.setItem("tacticsUltraSave", JSON.stringify({
+        players,
+        currentPlayer,
+        roundDart,
+        gameState
+    }));
+}
 
-        function saveState() {
-            lastGameState = {
-                players: JSON.parse(JSON.stringify(players)),
-                currentPlayerIndex: currentPlayerIndex,
-                currentTarget: currentTarget,
-                currentMode: currentMode
-            };
-        }
+function loadGame() {
+    const data = localStorage.getItem("tacticsUltraSave");
+    if (!data) return;
+    const obj = JSON.parse(data);
 
-        function undoLastThrow() {
-            if (!lastGameState) return;
-            players = lastGameState.players;
-            currentPlayerIndex = lastGameState.currentPlayerIndex;
-            currentTarget = lastGameState.currentTarget;
-            currentMode = lastGameState.currentMode;
-            
-            renderBoard();
-            renderScoreboard();
-            updateTurnIndicator();
-        }
+    players = obj.players;
+    currentPlayer = obj.currentPlayer;
+    roundDart = obj.roundDart;
+    gameState = obj.gameState;
 
-        function submitMiss() {
-            saveState();
-            endTurn();
-        }
+    updateScoreboard();
+}
 
-        function submitShot() {
-            if (!currentTarget) {
-                alert("Please select a target (1-20 or Bull) first.");
-                return;
-            }
+/* ============================================================
+   TOURNAMENT MODE (SIMPLE VERSION)
+=========================================================== */
 
-            // Simulate 3 darts logic
-            // In a real app, you might click buttons 3 times. 
-            // Here, we assume the user enters their result for all 3 darts in this action.
-            // However, the prompt says "Each round is 3 darts".
-            // Let's implement a simple flow: The user clicks "Throw Darts" and we assume they entered the result 
-            // OR we provide a way to enter 3 separate shots.
-            
-            // Simplified approach for webapp: 
-            // We will ask the user to enter points for 3 darts sequentially or just process one shot?
-            // Prompt says "Display buttons... Undo and Miss".
-            // Let's implement: Click target -> Click Mode -> Click "Throw" -> Prompt for points -> Repeat 3 times?
-            // Better UX: Click "Throw Darts" -> Prompt "Enter points for Dart 1" -> Update -> "Dart 2" -> Update -> "Dart 3" -> Update -> End Turn.
-            
-            // Let's stick to a simpler flow: 
-            // The user selects a target. 
-            // They click "Throw". 
-            // We open a prompt for "Points scored" (0 to 20 * mode).
-            // They click 3 times? No, that's tedious.
-            
-            // Alternative: The user clicks the target, then clicks 1, 2, or 3 to indicate how many darts hit that target?
-            // No, standard cricket: You hit specific numbers.
-            
-            // Let's use a simple input method for the shot value.
-            // Wait, the prompt says "Display buttons for 1-20 + Bull".
-            // This implies the interface is for selecting what you HIT.
-            
-            // Revised Flow:
-            // 1. Select Target (e.g., 20)
-            // 2. Select Mode (e.g., Single)
-            // 3. Click "Throw" -> This is ONE dart.
-            // 4. Repeat for 3 darts.
-            // 5. "Undo" reverts the last dart.
-            // 6. "Miss" skips the turn immediately.
-            
-            // Let's implement the 1-dart-at-a-time flow.
-            
-            // Wait, the prompt says "Each round is 3 darts".
-            // If I make them click "Throw" 3 times, that works.
-            // But I need to know the points. 
-            // Usually, you just say "I hit a single 20".
-            // So: Select Target -> Select Mode -> Click "Throw".
-            // But wait, if I hit a single 20, I get 1 point. If I hit a double 20, I get 2.
-            // The user needs to know if they hit it or missed it.
-            
-            // Let's refine:
-            // User selects Target (20).
-            // User selects Mode (Single).
-            // User clicks "Throw".
-            // We assume they hit it? No, they might have missed.
-            // Let's add a "Miss" button next to the throw?
-            // Or, simpler: The user clicks "Target" then "Mode" then "Throw". 
-            // We assume they hit it? No, that's not cricket.
-            
-            // Let's go with: 
-            // User selects Target.
-            // User selects Mode.
-            // User clicks "Throw".
-            // We prompt: "How many points? (0 for miss, or points based on mode)"
-            // No, that's too complex.
-            
-            // Let's try: 
-            // User selects Target (20).
-            // User selects Mode (Single).
-            // User clicks "Throw".
-            // We assume this is ONE dart.
-            // We need to know if they HIT.
-            // Let's add a "Hit" and "Miss" confirmation?
-            
-            // Actually, let's keep it simple: 
-            // Target + Mode = What they INTEND to hit.
-            // "Throw" = They hit it.
-            // "Miss" = They missed the whole turn.
-            // "Undo" = Revert last hit.
-            // This implies you can't miss a single dart unless you click "Miss" which ends the turn?
-            // That's a bit restrictive.
-            
-            // Let's do this:
-            // User selects Target.
-            // User selects Mode.
-            // User clicks "Throw".
-            // We ask: "Did you hit it?"
-            // If Yes -> Add points.
-            // If No -> Do nothing (but consume dart).
-            
-            // Okay, let's implement the "Did you hit it?" prompt.
-            
-            if (!confirm(`Throw ${currentMode} ${currentTarget}?`)) return;
-            
-            // Logic for 3 darts
-            let dartsLeft = 3;
-            let dartIndex = 0;
+function startTournament() {
+    alert("Tournament mode placeholder — expand later!");
+}
 
-            function processDart() {
-                if (dartIndex >= 3) {
-                    endTurn();
-                    return;
-                }
+</script>
 
-                // Simple prompt for "Did you hit it?"
-                const hit = confirm(`Dart ${dartIndex + 1}: Did you hit ${currentMode} ${currentTarget}?`);
-                
-                if (hit) {
-                    applyShot(currentTarget, currentMode, players[currentPlayerIndex]);
-                }
-                
-                dartIndex++;
-                processDart();
-            }
-
-            processDart();
-        }
-
-        function applyShot(target, mode, player) {
-            let points = 0;
-            let multiplier = 1;
-            if (mode === 'double') multiplier = 2;
-            if (mode === 'triple') multiplier = 3;
-            points = (target === 'bull') ? 1 : target; // Bull is usually 1 or 2, let's say 1 for simplicity or treat as 25/50?
-            // Standard Cricket: Bullseye is often treated as 25 (Single) and 50 (Double). 
-            // To simplify, let's treat Bull as "1" for single, "2" for double? 
-            // Or just "1" point per hit for bull.
-            // Let's stick to simple: Bull counts as 1 point for single, 2 for double, 3 for triple.
-            
-            if (target === 'bull') {
-                points = 1; 
-            }
-
-            // Scoring Logic
-            // 1. If target is open (both players 0): 
-            //    - Set player count to 1.
-            //    - Add points.
-            // 2. If target is closed (both players > 0):
-            //    - Add points.
-            // 3. If target is open (opponent has > 0):
-            //    - Set player count to opponent's count.
-            //    - Add points.
-            // 4. If target is closed (opponent has > 0):
-            //    - Add points.
-
-            // Standard Cricket Rules:
-            // - To "close" a number, you must hit it 3 times.
-            // - If you hit a number the opponent has closed, you get points but don't close it further (unless you haven't closed it yet).
-            // - If you hit an open number, you close it (count becomes 1). If opponent has it closed, you take over (count = opponent count).
-            // - If you hit a number opponent has open (count > 0), you match their count.
-
-            let currentCount = player.counts[target];
-            let opponent = players.find(p => p.id !== player.id);
-            let oppCount = opponent.counts[target];
-
-            // Check if target is already closed for this player
-            let isClosed = currentCount >= 3;
-
-            if (isClosed) {
-                // Already closed, just add points
-                player.score += points * multiplier;
-            } else {
-                // Not closed
-                if (oppCount === 0) {
-                    // Target open for opponent too
-                    player.counts[target] = currentCount + 1;
-                    player.score += points * multiplier;
-                } else {
-                    // Opponent has it open
-                    player.counts[target] = oppCount;
-                    player.score += points * multiplier;
-                }
-            }
-
-            // Check if player closed it
-            if (player.counts[target] >= 3) {
-                player.closed = true; // Flag for UI
-            }
-        }
-
-        function endTurn() {
-            // Check if all targets closed
-            const allClosed = players.every(p => {
-                return TARGETS.every(t => p.counts[t] >= 3);
-            });
-
-            if (allClosed) {
-                declareWinner();
-                return;
-            }
-
-            currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
-            renderBoard();
-            renderScoreboard();
-            updateTurnIndicator();
-        }
-
-        function renderBoard() {
-            const board = document.getElementById('target-board');
-            board.innerHTML = '';
-
-            TARGETS.forEach(target => {
-                const div = document.createElement('div');
-                const p1Closed = players.counts[target] >= 3;
-                const p2Closed = players.counts[target] >= 3;
-                const isClosed = p1Closed && p2Closed;
-
-                div.className = `target ${isClosed ? 'closed' : ''}`;
-                
-                // If target is Bull
-                if (target === 'bull') {
-                    div.className += ' bull';
-                    // Inner content for bull
-                    const bullContent = document.createElement('div');
-                    bullContent.className = 'target-header';
-                    bullContent.innerText = 'Bull';
-                    div.appendChild(bullContent);
-                    
-                    const countsDiv = document.createElement('div');
-                    countsDiv.className = 'target-counts';
-                    
-                    countsDiv.innerHTML = `
-                        <div class="count-box">${players.counts[target]}</div>
-                        <div class="count-box">${players.counts[target]}</div>
-                    `;
-                    div.appendChild(countsDiv);
-                } else {
-                    const header = document.createElement('div');
-                    header.className = 'target-header';
-                    header.innerText = target;
-                    div.appendChild(header);
-
-                    const countsDiv = document.createElement('div');
-                    countsDiv.className = 'target-counts';
-                    
-                    countsDiv.innerHTML = `
-                        <div class="count-box">${players.counts[target]}</div>
-                        <div class="count-box">${players.counts[target]}</div>
-                    `;
-                    div.appendChild(countsDiv);
-                }
-
-                board.appendChild(div);
-            });
-        }
-
-        function renderScoreboard() {
-            const board = document.getElementById('scoreboard');
-            board.innerHTML = '';
-
-            players.forEach((player, index) => {
-                const div = document.createElement('div');
-                div.className = `player-card ${index === currentPlayerIndex ? 'active' : ''}`;
-                div.innerHTML = `
-                    <div class="player-name">${player.name}</div>
-                    <div class="player-score">${player.score}</div>
-                    <div style="font-size:0.8em; color:#666;">Closed: ${TARGETS.filter(t => player.counts[t] >= 3).length}/${TARGETS.length}</div>
-                `;
-                board.appendChild(div);
-            });
-        }
-
-        function updateTurnIndicator() {
-            const indicator = document.getElementById('turn-indicator');
-            indicator.innerText = `Current Turn: ${players[currentPlayerIndex].name}`;
-            indicator.style.color = players[currentPlayerIndex].name === players.name ? '#e74c3c' : '#3498db';
-        }
-
-        function declareWinner() {
-            gameActive = false;
-            let winner = null;
-            let winnerScore = -1;
-            let tie = false;
-
-            if (players.score > players.score) {
-                winner = players;
-                winnerScore = players.score;
-            } else if (players.score > players.score) {
-                winner = players;
-                winnerScore = players.score;
-            } else {
-                tie = true;
-            }
-
-            const banner = document.getElementById('winner-banner');
-            const winnerText = document.getElementById('winner-text');
-            const finalScores = document.getElementById('final-scores');
-
-            if (tie) {
-                winnerText.innerText = "IT'S A TIE!";
-                winnerText.style.color = "#f1c40f";
-            } else {
-                winnerText.innerText = `${winner.name} WINS!`;
-                winnerText.style.color = "#2ecc71";
-            }
-
-            let html = '';
-            players.forEach(p => {
-                html += `
-                    <div class="winner-row">
-                        <span class="${p === winner ? 'winner-name' : ''}">${p.name}</span>
-                        <span>${p.score} Points</span>
-                    </div>
-                `;
-            });
-            finalScores.innerHTML = html;
-
-            banner.style.display = 'flex';
-        }
-    </script>
 </body>
 </html>
+
