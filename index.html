@@ -3,26 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Tactics Ultra — Hellcastle Edition</title>
 
-<!-- 
-===========================================================
-    TACTICS ULTRA — CHUNK 1
-    HTML + HEAD + GLOBAL CSS + ANIMATIONS + LAYOUT
-    (Commented for clarity)
-===========================================================
--->
-
 <style>
-
-/* ---------------------------------------------------------
-   HELLCASTLE COLOR PALETTE
---------------------------------------------------------- */
 :root {
     --hc-bg: #0d0d0f;
     --hc-panel: #1a1a1d;
-    --hc-accent: #ff009d;       /* Hard magenta glow */
+    --hc-accent: #ff009d;
     --hc-accent-soft: #ff4ec2;
     --hc-text: #f2f2f5;
     --hc-text-dim: #b8b8c2;
@@ -32,9 +19,6 @@
     --hc-yellow: #ffe066;
 }
 
-/* ---------------------------------------------------------
-   GLOBAL RESET
---------------------------------------------------------- */
 * {
     margin: 0;
     padding: 0;
@@ -49,9 +33,6 @@ body {
     overflow-x: hidden;
 }
 
-/* ---------------------------------------------------------
-   PAGE LAYOUT
---------------------------------------------------------- */
 #app {
     width: 100%;
     max-width: 1100px;
@@ -59,7 +40,6 @@ body {
     padding: 20px;
 }
 
-/* Header */
 #header {
     text-align: center;
     margin-bottom: 20px;
@@ -72,9 +52,6 @@ body {
     margin-bottom: 10px;
 }
 
-/* ---------------------------------------------------------
-   TOGGLE VIEW BUTTON (Board <-> Score/Stats)
---------------------------------------------------------- */
 #viewToggle {
     width: 100%;
     padding: 12px;
@@ -92,9 +69,6 @@ body {
     background: #222228;
 }
 
-/* ---------------------------------------------------------
-   MAIN PANELS
---------------------------------------------------------- */
 #boardView,
 #scoreView {
     width: 100%;
@@ -105,9 +79,6 @@ body {
     display: block;
 }
 
-/* ---------------------------------------------------------
-   SCOREBOARD TABLE
---------------------------------------------------------- */
 #scoreboard {
     width: 100%;
     border-collapse: collapse;
@@ -134,15 +105,11 @@ body {
     text-shadow: 0 0 6px var(--hc-accent);
 }
 
-/* Closed target cell */
 .closedCell {
     color: var(--hc-green);
     font-weight: bold;
 }
 
-/* ---------------------------------------------------------
-   STATS PANEL
---------------------------------------------------------- */
 #statsPanel {
     margin-top: 25px;
     padding: 15px;
@@ -157,9 +124,6 @@ body {
     text-shadow: 0 0 8px var(--hc-accent);
 }
 
-/* ---------------------------------------------------------
-   TOURNAMENT MODE UI
---------------------------------------------------------- */
 #tournamentPanel {
     margin-top: 30px;
     padding: 15px;
@@ -188,12 +152,9 @@ body {
     background: #2d2d33;
 }
 
-/* ---------------------------------------------------------
-   HARD MAGENTA GLOW ANIMATION (G3-B)
---------------------------------------------------------- */
 @keyframes hardMagentaGlow {
-    0%   { filter: drop-shadow(0 0 0px var(--hc-accent)); }
-    40%  { filter: drop-shadow(0 0 14px var(--hc-accent)); }
+    0% { filter: drop-shadow(0 0 0px var(--hc-accent)); }
+    40% { filter: drop-shadow(0 0 14px var(--hc-accent)); }
     100% { filter: drop-shadow(0 0 6px var(--hc-accent)); }
 }
 
@@ -201,13 +162,8 @@ body {
     animation: hardMagentaGlow 0.45s ease-out forwards;
 }
 
-/* ---------------------------------------------------------
-   FLASH → GLOW → LOCK ANIMATION STACK
---------------------------------------------------------- */
-
-/* Flash white */
 @keyframes flashWhite {
-    0%   { fill: white; }
+    0% { fill: white; }
     100% { fill: inherit; }
 }
 
@@ -215,9 +171,8 @@ body {
     animation: flashWhite 0.18s ease-out;
 }
 
-/* Lock overlay fade-in */
 @keyframes lockFade {
-    0%   { opacity: 0; transform: scale(0.6); }
+    0% { opacity: 0; transform: scale(0.6); }
     100% { opacity: 1; transform: scale(1); }
 }
 
@@ -228,9 +183,6 @@ body {
     animation: lockFade 0.35s ease-out forwards;
 }
 
-/* ---------------------------------------------------------
-   SVG CONTAINER
---------------------------------------------------------- */
 #dartboardContainer {
     width: 100%;
     max-width: 600px;
@@ -246,321 +198,233 @@ svg {
     touch-action: manipulation;
 }
 
-/* ---------------------------------------------------------
-   RESPONSIVE RULES
---------------------------------------------------------- */
 @media (max-width: 700px) {
-    #header h1 {
-        font-size: 1.9rem;
-    }
-    #viewToggle {
-        font-size: 1rem;
-    }
-    #statsPanel, #tournamentPanel {
-        font-size: 0.9rem;
-    }
+    #header h1 { font-size: 1.9rem; }
+    #viewToggle { font-size: 1rem; }
+    #statsPanel, #tournamentPanel { font-size: 0.9rem; }
 }
-
 </style>
 </head>
 
 <body>
-
 <div id="app">
-<!-- PLAYER SETUP PANEL -->
-<div id="playerSetupPanel" style="
-    background: var(--hc-panel);
-    border: 1px solid var(--hc-border);
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-">
+
+<div id="playerSetupPanel" style="background: var(--hc-panel); border: 1px solid var(--hc-border); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
     <h2 style="color: var(--hc-accent); margin-bottom: 10px;">Players</h2>
-
     <div id="playerList"></div>
-
     <button id="addPlayerBtn" class="tourneyButton">Add Player</button>
-    <button id="startGameBtn" class="tourneyButton" style="background: var(--hc-accent); color: black;">
-        Start Game
-    </button>
+    <button id="startGameBtn" class="tourneyButton" style="background: var(--hc-accent); color: black;">Start Game</button>
 </div>
 
-<!-- GAME CONTROL BUTTONS -->
 <div id="gameControlPanel" style="display:none; margin-bottom:20px;">
     <button id="newGameBtn" class="tourneyButton">New Game</button>
     <button id="undoBtn" class="tourneyButton">Undo</button>
     <button id="tourneyBtn" class="tourneyButton">Tournament Mode</button>
 </div>
 
-    <!-- HEADER -->
-    <div id="header">
-        <h1>TACTICS ULTRA</h1>
-        <p style="color: var(--hc-text-dim);">Hellcastle Edition</p>
+<div id="header">
+    <h1>TACTICS ULTRA</h1>
+    <p style="color: var(--hc-text-dim);">Hellcastle Edition</p>
+</div>
+
+<button id="viewToggle">Show Score / Stats</button>
+
+<div id="boardView" class="activeView">
+    <div id="dartboardContainer">
+        <svg id="dartboard" viewBox="0 0 1000 1000">
+            <circle cx="500" cy="500" r="500" fill="#000" />
+            <circle id="seg-Bull-D" cx="500" cy="500" r="30" fill="#d22" stroke="#111" stroke-width="2" />
+            <circle id="seg-Bull-S" cx="500" cy="500" r="60" fill="#2b2b2b" stroke="#111" stroke-width="2" />
+
+            <g id="num-20" transform="rotate(0 500 500)">
+                <path id="seg-20-SO" d="M500,500 L500,80 A420,420 0 0,1 657,118 Z" fill="#f2e9d0" />
+                <path id="seg-20-T" d="M500,500 L657,118 A290,290 0 0,1 580,100 Z" fill="#d22" />
+                <path id="seg-20-SI" d="M500,500 L580,100 A260,260 0 0,1 540,92 Z" fill="#1a1a1a" />
+                <path id="seg-20-D" d="M500,500 L540,92 A450,450 0 0,1 657,118 Z" fill="#0a0" />
+            </g>
+
+            <g id="num-1" transform="rotate(18 500 500)">
+                <path id="seg-1-SO" d="M500,500 L657,118 A420,420 0 0,1 785,215 Z" fill="#1a1a1a" />
+                <path id="seg-1-T" d="M500,500 L785,215 A290,290 0 0,1 720,160 Z" fill="#0a0" />
+                <path id="seg-1-SI" d="M500,500 L720,160 A260,260 0 0,1 690,140 Z" fill="#f2e9d0" />
+                <path id="seg-1-D" d="M500,500 L690,140 A450,450 0 0,1 785,215 Z" fill="#d22" />
+            </g>
+
+            <g id="num-18" transform="rotate(36 500 500)">
+                <path id="seg-18-SO" d="M500,500 L785,215 A420,420 0 0,1 860,350 Z" fill="#f2e9d0" />
+                <path id="seg-18-T" d="M500,500 L860,350 A290,290 0 0,1 820,260 Z" fill="#d22" />
+                <path id="seg-18-SI" d="M500,500 L820,260 A260,260 0 0,1 800,230 Z" fill="#1a1a1a" />
+                <path id="seg-18-D" d="M500,500 L800,230 A450,450 0 0,1 860,350 Z" fill="#0a0" />
+            </g>
+
+            <g id="num-4" transform="rotate(54 500 500)">
+                <path id="seg-4-SO" d="M500,500 L860,350 A420,420 0 0,1 890,500 Z" fill="#1a1a1a" />
+                <path id="seg-4-T" d="M500,500 L890,500 A290,290 0 0,1 870,420 Z" fill="#0a0" />
+                <path id="seg-4-SI" d="M500,500 L870,420 A260,260 0 0,1 860,390 Z" fill="#f2e9d0" />
+                <path id="seg-4-D" d="M500,500 L860,390 A450,450 0 0,1 890,500 Z" fill="#d22" />
+            </g>
+
+            <g id="num-13" transform="rotate(72 500 500)">
+                <path id="seg-13-SO" d="M500,500 L890,500 A420,420 0 0,1 860,650 Z" fill="#f2e9d0" />
+                <path id="seg-13-T" d="M500,500 L860,650 A290,290 0 0,1 870,580 Z" fill="#d22" />
+                <path id="seg-13-SI" d="M500,500 L870,580 A260,260 0 0,1 860,550 Z" fill="#1a1a1a" />
+                <path id="seg-13-D" d="M500,500 L860,550 A450,450 0 0,1 890,500 Z" fill="#0a0" />
+            </g>
+
+            <g id="num-6" transform="rotate(90 500 500)">
+                <path id="seg-6-SO" d="M500,500 L860,650 A420,420 0 0,1 785,785 Z" fill="#1a1a1a" />
+                <path id="seg-6-T" d="M500,500 L785,785 A290,290 0 0,1 820,720 Z" fill="#0a0" />
+                <path id="seg-6-SI" d="M500,500 L820,720 A260,260 0 0,1 800,690 Z" fill="#f2e9d0" />
+                <path id="seg-6-D" d="M500,500 L800,690 A450,450 0 0,1 860,650 Z" fill="#d22" />
+            </g>
+
+            <g id="num-10" transform="rotate(108 500 500)">
+                <path id="seg-10-SO" d="M500,500 L785,785 A420,420 0 0,1 657,882 Z" fill="#f2e9d0" />
+                <path id="seg-10-T" d="M500,500 L657,882 A290,290 0 0,1 720,840 Z" fill="#d22" />
+                <path id="seg-10-SI" d="M500,500 L720,840 A260,260 0 0,1 690,820 Z" fill="#1a1a1a" />
+                <path id="seg-10-D" d="M500,500 L690,820 A450,450 0 0,1 785,785 Z" fill="#0a0" />
+            </g>
+
+            <g id="num-15" transform="rotate(126 500 500)">
+                <path id="seg-15-SO" d="M500,500 L657,882 A420,420 0 0,1 500,920 Z" fill="#1a1a1a" />
+                <path id="seg-15-T" d="M500,500 L500,920 A290,290 0 0,1 580,900 Z" fill="#0a0" />
+                <path id="seg-15-SI" d="M500,500 L580,900 A260,260 0 0,1 540,890 Z" fill="#f2e9d0" />
+                <path id="seg-15-D" d="M500,500 L540,890 A450,450 0 0,1 657,882 Z" fill="#d22" />
+            </g>
+
+            <g id="num-2" transform="rotate(144 500 500)">
+                <path id="seg-2-SO" d="M500,500 L500,920 A420,420 0 0,1 343,882 Z" fill="#f2e9d0" />
+                <path id="seg-2-T" d="M500,500 L343,882 A290,290 0 0,1 420,900 Z" fill="#d22" />
+                <path id="seg-2-SI" d="M500,500 L420,900 A260,260 0 0,1 460,890 Z" fill="#1a1a1a" />
+                <path id="seg-2-D" d="M500,500 L460,890 A450,450 0 0,1 500,920 Z" fill="#0a0" />
+            </g>
+
+            <g id="num-17" transform="rotate(162 500 500)">
+                <path id="seg-17-SO" d="M500,500 L343,882 A420,420 0 0,1 215,785 Z" fill="#1a1a1a" />
+                <path id="seg-17-T" d="M500,500 L215,785 A290,290 0 0,1 280,840 Z" fill="#0a0" />
+                <path id="seg-17-SI" d="M500,500 L280,840 A260,260 0 0,1 310,820 Z" fill="#f2e9d0" />
+                <path id="seg-17-D" d="M500,500 L310,820 A450,450 0 0,1 343,882 Z" fill="#d22" />
+            </g>
+
+            <g id="num-3" transform="rotate(180 500 500)">
+                <path id="seg-3-SO" d="M500,500 L215,785 A420,420 0 0,1 140,650 Z" fill="#f2e9d0" />
+                <path id="seg-3-T" d="M500,500 L140,650 A290,290 0 0,1 180,720 Z" fill="#d22" />
+                <path id="seg-3-SI" d="M500,500 L180,720 A260,260 0 0,1 200,690 Z" fill="#1a1a1a" />
+                <path id="seg-3-D" d="M500,500 L200,690 A450,450 0 0,1 215,785 Z" fill="#0a0" />
+            </g>
+
+            <g id="num-19" transform="rotate(198 500 500)">
+                <path id="seg-19-SO" d="M500,500 L140,650 A420,420 0 0,1 110,500 Z" fill="#1a1a1a" />
+                <path id="seg-19-T" d="M500,500 L110,500 A290,290 0 0,1 130,580 Z" fill="#0a0" />
+                <path id="seg-19-SI" d="M500,500 L130,580 A260,260 0 0,1 140,610 Z" fill="#f2e9d0" />
+                <path id="seg-19-D" d="M500,500 L140,610 A450,450 0 0,1 140,650 Z" fill="#d22" />
+            </g>
+
+            <g id="num-7" transform="rotate(216 500 500)">
+                <path id="seg-7-SO" d="M500,500 L110,500 A420,420 0 0,1 140,350 Z" fill="#f2e9d0" />
+                <path id="seg-7-T" d="M500,500 L140,350 A290,290 0 0,1 130,420 Z" fill="#d22" />
+                <path id="seg-7-SI" d="M500,500 L130,420 A260,260 0 0,1 140,450 Z" fill="#1a1a1a" />
+                <path id="seg-7-D" d="M500,500 L140,450 A450,450 0 0,1 110,500 Z" fill="#0a0" />
+            </g>
+
+            <g id="num-16" transform="rotate(234 500 500)">
+                <path id="seg-16-SO" d="M500,500 L140,350 A420,420 0 0,1 215,215 Z" fill="#1a1a1a" />
+                <path id="seg-16-T" d="M500,500 L215,215 A290,290 0 0,1 180,280 Z" fill="#0a0" />
+                <path id="seg-16-SI" d="M500,500 L180,280 A260,260 0 0,1 200,310 Z" fill="#f2e9d0" />
+                <path id="seg-16-D" d="M500,500 L200,310 A450,450 0 0,1 140,350 Z" fill="#d22" />
+            </g>
+
+            <g id="num-8" transform="rotate(252 500 500)">
+                <path id="seg-8-SO" d="M500,500 L215,215 A420,420 0 0,1 343,118 Z" fill="#f2e9d0" />
+                <path id="seg-8-T" d="M500,500 L343,118 A290,290 0 0,1 280,160 Z" fill="#d22" />
+                <path id="seg-8-SI" d="M500,500 L280,160 A260,260 0 0,1 310,180 Z" fill="#1a1a1a" />
+                <path id="seg-8-D" d="M500,500 L310,180 A450,450 0 0,1 215,215 Z" fill="#0a0" />
+            </g>
+
+            <g id="num-11" transform="rotate(270 500 500)">
+                <path id="seg-11-SO" d="M500,500 L343,118 A420,420 0 0,1 500,80 Z" fill="#1a1a1a" />
+                <path id="seg-11-T" d="M500,500 L500,80 A290,290 0 0,1 420,100 Z" fill="#0a0" />
+                <path id="seg-11-SI" d="M500,500 L420,100 A260,260 0 0,1 460,92 Z" fill="#f2e9d0" />
+                <path id="seg-11-D" d="M500,500 L460,92 A450,450 0 0,1 343,118 Z" fill="#d22" />
+            </g>
+
+            <g id="num-14" transform="rotate(288 500 500)">
+                <path id="seg-14-SO" d="M500,500 L500,80 A420,420 0 0,1 343,118 Z" fill="#f2e9d0" />
+                <path id="seg-14-T" d="M500,500 L343,118 A290,290 0 0,1 420,100 Z" fill="#d22" />
+                <path id="seg-14-SI" d="M500,500 L420,100 A260,260 0 0,1 460,92 Z" fill="#1a1a1a" />
+                <path id="seg-14-D" d="M500,500 L460,92 A450,450 0 0,1 343,118 Z" fill="#0a0" />
+            </g>
+
+            <g id="num-9" transform="rotate(306 500 500)">
+                <path id="seg-9-SO" d="M500,500 L343,118 A420,420 0 0,1 215,215 Z" fill="#1a1a1a" />
+                <path id="seg-9-T" d="M500,500 L215,215 A290,290 0 0,1 280,160 Z" fill="#0a0" />
+                <path id="seg-9-SI" d="M500,500 L280,160 A260,260 0 0,1 310,180 Z" fill="#f2e9d0" />
+                <path id="seg-9-D" d="M500,500 L310,180 A450,450 0 0,1 343,118 Z" fill="#d22" />
+            </g>
+
+            <g id="num-12" transform="rotate(324 500 500)">
+                <path id="seg-12-SO" d="M500,500 L215,215 A420,420 0 0,1 140,350 Z" fill="#f2e9d0" />
+                <path id="seg-12-T" d="M500,500 L140,350 A290,290 0 0,1 180,280 Z" fill="#d22" />
+                <path id="seg-12-SI" d="M500,500 L180,280 A260,260 0 0,1 200,310 Z" fill="#1a1a1a" />
+                <path id="seg-12-D" d="M500,500 L200,310 A450,450 0 0,1 215,215 Z" fill="#0a0" />
+            </g>
+
+            <g id="num-5" transform="rotate(342 500 500)">
+                <path id="seg-5-SO" d="M500,500 L140,350 A420,420 0 0,1 110,500 Z" fill="#1a1a1a" />
+                <path id="seg-5-T" d="M500,500 L110,500 A290,290 0 0,1 130,420 Z" fill="#0a0" />
+                <path id="seg-5-SI" d="M500,500 L130,420 A260,260 0 0,1 140,450 Z" fill="#f2e9d0" />
+                <path id="seg-5-D" d="M500,500 L140,450 A450,450 0 0,1 140,350 Z" fill="#d22" />
+            </g>
+
+            <g id="numberRing" font-family="Arial" font-size="70" fill="#ffffff" text-anchor="middle">
+                <text x="500" y="55">20</text>
+                <text x="640" y="85" transform="rotate(18 640 85)">1</text>
+                <text x="760" y="170" transform="rotate(36 760 170)">18</text>
+                <text x="830" y="300" transform="rotate(54 830 300)">4</text>
+                <text x="860" y="450" transform="rotate(72 860 450)">13</text>
+                <text x="830" y="600" transform="rotate(90 830 600)">6</text>
+                <text x="760" y="730" transform="rotate(108 760 730)">10</text>
+                <text x="640" y="815" transform="rotate(126 640 815)">15</text>
+                <text x="500" y="845" transform="rotate(144 500 845)">2</text>
+                <text x="360" y="815" transform="rotate(162 360 815)">17</text>
+                <text x="240" y="730" transform="rotate(180 240 730)">3</text>
+                <text x="170" y="600" transform="rotate(198 170 600)">19</text>
+                <text x="140" y="450" transform="rotate(216 140 450)">7</text>
+                <text x="170" y="300" transform="rotate(234 170 300)">16</text>
+                <text x="240" y="170" transform="rotate(252 240 170)">8</text>
+                <text x="360" y="85" transform="rotate(270 360 85)">11</text>
+                <text x="500" y="55" transform="rotate(288 500 55)">14</text>
+                <text x="640" y="85" transform="rotate(306 640 85)">9</text>
+                <text x="760" y="170" transform="rotate(324 760 170)">12</text>
+                <text x="830" y="300" transform="rotate(342 830 300)">5</text>
+            </g>
+        </svg>
     </div>
+</div>
 
-    <!-- TOGGLE VIEW BUTTON -->
-    <button id="viewToggle">Show Score / Stats</button>
+<div id="scoreView"></div>
 
-    <!-- BOARD VIEW (default) -->
-    <div id="boardView" class="activeView">
-        <div id="dartboardContainer">
-            <!-- =========================================================
-     CHUNK 2A — REALISTIC PDC SVG DARTBOARD (PART 1)
-     GL2 MODE — Glow/Lock applied directly to segment paths
-========================================================= -->
-
-<svg id="dartboard" viewBox="0 0 1000 1000">
-
-    <!-- BACKGROUND -->
-    <circle cx="500" cy="500" r="500" fill="#000" />
-
-    <!-- INNER BULL (50) -->
-    <circle id="seg-Bull-D" cx="500" cy="500" r="30" fill="#d22" stroke="#111" stroke-width="2" />
-
-    <!-- OUTER BULL (25) -->
-    <circle id="seg-Bull-S" cx="500" cy="500" r="60" fill="#2b2b2b" stroke="#111" stroke-width="2" />
-
-    <!-- =========================================================
-         WEDGES 20 → 11
-         Each wedge group contains:
-         - Single Outer (SO)
-         - Triple (T)
-         - Single Inner (SI)
-         - Double (D)
-         IDs follow: seg-20-SO, seg-20-T, seg-20-SI, seg-20-D
-    ========================================================= -->
-
-    <!-- 20 -->
-    <g id="num-20" transform="rotate(0 500 500)">
-        <path id="seg-20-SO" d="M500,500 L500,80 A420,420 0 0,1 657,118 Z" fill="#f2e9d0" />
-        <path id="seg-20-T"  d="M500,500 L657,118 A290,290 0 0,1 580,100 Z" fill="#d22" />
-        <path id="seg-20-SI" d="M500,500 L580,100 A260,260 0 0,1 540,92 Z" fill="#1a1a1a" />
-        <path id="seg-20-D"  d="M500,500 L540,92 A450,450 0 0,1 657,118 Z" fill="#0a0" />
-    </g>
-
-    <!-- 1 -->
-    <g id="num-1" transform="rotate(18 500 500)">
-        <path id="seg-1-SO" d="M500,500 L657,118 A420,420 0 0,1 785,215 Z" fill="#1a1a1a" />
-        <path id="seg-1-T"  d="M500,500 L785,215 A290,290 0 0,1 720,160 Z" fill="#0a0" />
-        <path id="seg-1-SI" d="M500,500 L720,160 A260,260 0 0,1 690,140 Z" fill="#f2e9d0" />
-        <path id="seg-1-D"  d="M500,500 L690,140 A450,450 0 0,1 785,215 Z" fill="#d22" />
-    </g>
-
-    <!-- 18 -->
-    <g id="num-18" transform="rotate(36 500 500)">
-        <path id="seg-18-SO" d="M500,500 L785,215 A420,420 0 0,1 860,350 Z" fill="#f2e9d0" />
-        <path id="seg-18-T"  d="M500,500 L860,350 A290,290 0 0,1 820,260 Z" fill="#d22" />
-        <path id="seg-18-SI" d="M500,500 L820,260 A260,260 0 0,1 800,230 Z" fill="#1a1a1a" />
-        <path id="seg-18-D"  d="M500,500 L800,230 A450,450 0 0,1 860,350 Z" fill="#0a0" />
-    </g>
-
-    <!-- 4 -->
-    <g id="num-4" transform="rotate(54 500 500)">
-        <path id="seg-4-SO" d="M500,500 L860,350 A420,420 0 0,1 890,500 Z" fill="#1a1a1a" />
-        <path id="seg-4-T"  d="M500,500 L890,500 A290,290 0 0,1 870,420 Z" fill="#0a0" />
-        <path id="seg-4-SI" d="M500,500 L870,420 A260,260 0 0,1 860,390 Z" fill="#f2e9d0" />
-        <path id="seg-4-D"  d="M500,500 L860,390 A450,450 0 0,1 890,500 Z" fill="#d22" />
-    </g>
-
-    <!-- 13 -->
-    <g id="num-13" transform="rotate(72 500 500)">
-        <path id="seg-13-SO" d="M500,500 L890,500 A420,420 0 0,1 860,650 Z" fill="#f2e9d0" />
-        <path id="seg-13-T"  d="M500,500 L860,650 A290,290 0 0,1 870,580 Z" fill="#d22" />
-        <path id="seg-13-SI" d="M500,500 L870,580 A260,260 0 0,1 860,550 Z" fill="#1a1a1a" />
-        <path id="seg-13-D"  d="M500,500 L860,550 A450,450 0 0,1 890,500 Z" fill="#0a0" />
-    </g>
-
-    <!-- 6 -->
-    <g id="num-6" transform="rotate(90 500 500)">
-        <path id="seg-6-SO" d="M500,500 L860,650 A420,420 0 0,1 785,785 Z" fill="#1a1a1a" />
-        <path id="seg-6-T"  d="M500,500 L785,785 A290,290 0 0,1 820,720 Z" fill="#0a0" />
-        <path id="seg-6-SI" d="M500,500 L820,720 A260,260 0 0,1 800,690 Z" fill="#f2e9d0" />
-        <path id="seg-6-D"  d="M500,500 L800,690 A450,450 0 0,1 860,650 Z" fill="#d22" />
-    </g>
-
-    <!-- 10 -->
-    <g id="num-10" transform="rotate(108 500 500)">
-        <path id="seg-10-SO" d="M500,500 L785,785 A420,420 0 0,1 657,882 Z" fill="#f2e9d0" />
-        <path id="seg-10-T"  d="M500,500 L657,882 A290,290 0 0,1 720,840 Z" fill="#d22" />
-        <path id="seg-10-SI" d="M500,500 L720,840 A260,260 0 0,1 690,820 Z" fill="#1a1a1a" />
-        <path id="seg-10-D"  d="M500,500 L690,820 A450,450 0 0,1 785,785 Z" fill="#0a0" />
-    </g>
-
-    <!-- 15 -->
-    <g id="num-15" transform="rotate(126 500 500)">
-        <path id="seg-15-SO" d="M500,500 L657,882 A420,420 0 0,1 500,920 Z" fill="#1a1a1a" />
-        <path id="seg-15-T"  d="M500,500 L500,920 A290,290 0 0,1 580,900 Z" fill="#0a0" />
-        <path id="seg-15-SI" d="M500,500 L580,900 A260,260 0 0,1 540,890 Z" fill="#f2e9d0" />
-        <path id="seg-15-D"  d="M500,500 L540,890 A450,450 0 0,1 657,882 Z" fill="#d22" />
-    </g>
-
-    <!-- 2 -->
-    <g id="num-2" transform="rotate(144 500 500)">
-        <path id="seg-2-SO" d="M500,500 L500,920 A420,420 0 0,1 343,882 Z" fill="#f2e9d0" />
-        <path id="seg-2-T"  d="M500,500 L343,882 A290,290 0 0,1 420,900 Z" fill="#d22" />
-        <path id="seg-2-SI" d="M500,500 L420,900 A260,260 0 0,1 460,890 Z" fill="#1a1a1a" />
-        <path id="seg-2-D"  d="M500,500 L460,890 A450,450 0 0,1 500,920 Z" fill="#0a0" />
-    </g>
-
-    <!-- 17 -->
-    <g id="num-17" transform="rotate(162 500 500)">
-        <path id="seg-17-SO" d="M500,500 L343,882 A420,420 0 0,1 215,785 Z" fill="#1a1a1a" />
-        <path id="seg-17-T"  d="M500,500 L215,785 A290,290 0 0,1 280,840 Z" fill="#0a0" />
-        <path id="seg-17-SI" d="M500,500 L280,840 A260,260 0 0,1 310,820 Z" fill="#f2e9d0" />
-        <path id="seg-17-D"  d="M500,500 L310,820 A450,450 0 0,1 343,882 Z" fill="#d22" />
-    </g>
-
-    <!-- 3 -->
-    <g id="num-3" transform="rotate(180 500 500)">
-        <path id="seg-3-SO" d="M500,500 L215,785 A420,420 0 0,1 140,650 Z" fill="#f2e9d0" />
-        <path id="seg-3-T"  d="M500,500 L140,650 A290,290 0 0,1 180,720 Z" fill="#d22" />
-        <path id="seg-3-SI" d="M500,500 L180,720 A260,260 0 0,1 200,690 Z" fill="#1a1a1a" />
-        <path id="seg-3-D"  d="M500,500 L200,690 A450,450 0 0,1 215,785 Z" fill="#0a0" />
-    </g>
-
-    <!-- 19 -->
-    <g id="num-19" transform="rotate(198 500 500)">
-        <path id="seg-19-SO" d="M500,500 L140,650 A420,420 0 0,1 110,500 Z" fill="#1a1a1a" />
-        <path id="seg-19-T"  d="M500,500 L110,500 A290,290 0 0,1 130,580 Z" fill="#0a0" />
-        <path id="seg-19-SI" d="M500,500 L130,580 A260,260 0 0,1 140,610 Z" fill="#f2e9d0" />
-        <path id="seg-19-D"  d="M500,500 L140,610 A450,450 0 0,1 140,650 Z" fill="#d22" />
-    </g>
-
-    <!-- 7 -->
-    <g id="num-7" transform="rotate(216 500 500)">
-        <path id="seg-7-SO" d="M500,500 L110,500 A420,420 0 0,1 140,350 Z" fill="#f2e9d0" />
-        <path id="seg-7-T"  d="M500,500 L140,350 A290,290 0 0,1 130,420 Z" fill="#d22" />
-        <path id="seg-7-SI" d="M500,500 L130,420 A260,260 0 0,1 140,450 Z" fill="#1a1a1a" />
-        <path id="seg-7-D"  d="M500,500 L140,450 A450,450 0 0,1 110,500 Z" fill="#0a0" />
-    </g>
-
-    <!-- 16 -->
-    <g id="num-16" transform="rotate(234 500 500)">
-        <path id="seg-16-SO" d="M500,500 L140,350 A420,420 0 0,1 215,215 Z" fill="#1a1a1a" />
-        <path id="seg-16-T"  d="M500,500 L215,215 A290,290 0 0,1 180,280 Z" fill="#0a0" />
-        <path id="seg-16-SI" d="M500,500 L180,280 A260,260 0 0,1 200,310 Z" fill="#f2e9d0" />
-        <path id="seg-16-D"  d="M500,500 L200,310 A450,450 0 0,1 140,350 Z" fill="#d22" />
-    </g>
-
-    <!-- 8 -->
-    <g id="num-8" transform="rotate(252 500 500)">
-        <path id="seg-8-SO" d="M500,500 L215,215 A420,420 0 0,1 343,118 Z" fill="#f2e9d0" />
-        <path id="seg-8-T"  d="M500,500 L343,118 A290,290 0 0,1 280,160 Z" fill="#d22" />
-        <path id="seg-8-SI" d="M500,500 L280,160 A260,260 0 0,1 310,180 Z" fill="#1a1a1a" />
-        <path id="seg-8-D"  d="M500,500 L310,180 A450,450 0 0,1 215,215 Z" fill="#0a0" />
-    </g>
-
-    <!-- 11 -->
-    <g id="num-11" transform="rotate(270 500 500)">
-        <path id="seg-11-SO" d="M500,500 L343,118 A420,420 0 0,1 500,80 Z" fill="#1a1a1a" />
-        <path id="seg-11-T"  d="M500,500 L500,80 A290,290 0 0,1 420,100 Z" fill="#0a0" />
-        <path id="seg-11-SI" d="M500,500 L420,100 A260,260 0 0,1 460,92 Z" fill="#f2e9d0" />
-        <path id="seg-11-D"  d="M500,500 L460,92 A450,450 0 0,1 343,118 Z" fill="#d22" />
-    </g>
-    <!-- =========================================================
-         WEDGES 14 → 5 (SECOND HALF OF THE BOARD)
-    ========================================================= -->
-
-    <!-- 14 -->
-    <g id="num-14" transform="rotate(288 500 500)">
-        <path id="seg-14-SO" d="M500,500 L500,80 A420,420 0 0,1 343,118 Z" fill="#f2e9d0" />
-        <path id="seg-14-T"  d="M500,500 L343,118 A290,290 0 0,1 420,100 Z" fill="#d22" />
-        <path id="seg-14-SI" d="M500,500 L420,100 A260,260 0 0,1 460,92 Z" fill="#1a1a1a" />
-        <path id="seg-14-D"  d="M500,500 L460,92 A450,450 0 0,1 343,118 Z" fill="#0a0" />
-    </g>
-
-    <!-- 9 -->
-    <g id="num-9" transform="rotate(306 500 500)">
-        <path id="seg-9-SO" d="M500,500 L343,118 A420,420 0 0,1 215,215 Z" fill="#1a1a1a" />
-        <path id="seg-9-T"  d="M500,500 L215,215 A290,290 0 0,1 280,160 Z" fill="#0a0" />
-        <path id="seg-9-SI" d="M500,500 L280,160 A260,260 0 0,1 310,180 Z" fill="#f2e9d0" />
-        <path id="seg-9-D"  d="M500,500 L310,180 A450,450 0 0,1 343,118 Z" fill="#d22" />
-    </g>
-
-    <!-- 12 -->
-    <g id="num-12" transform="rotate(324 500 500)">
-        <path id="seg-12-SO" d="M500,500 L215,215 A420,420 0 0,1 140,350 Z" fill="#f2e9d0" />
-        <path id="seg-12-T"  d="M500,500 L140,350 A290,290 0 0,1 180,280 Z" fill="#d22" />
-        <path id="seg-12-SI" d="M500,500 L180,280 A260,260 0 0,1 200,310 Z" fill="#1a1a1a" />
-        <path id="seg-12-D"  d="M500,500 L200,310 A450,450 0 0,1 215,215 Z" fill="#0a0" />
-    </g>
-
-    <!-- 5 -->
-    <g id="num-5" transform="rotate(342 500 500)">
-        <path id="seg-5-SO" d="M500,500 L140,350 A420,420 0 0,1 110,500 Z" fill="#1a1a1a" />
-        <path id="seg-5-T"  d="M500,500 L110,500 A290,290 0 0,1 130,420 Z" fill="#0a0" />
-        <path id="seg-5-SI" d="M500,500 L130,420 A260,260 0 0,1 140,450 Z" fill="#f2e9d0" />
-        <path id="seg-5-D"  d="M500,500 L140,450 A450,450 0 0,1 140,350 Z" fill="#d22" />
-    </g>
-
-    <!-- =========================================================
-         NUMBER RING (PDC STANDARD ORDER)
-         Numbers: 20–1–18–4–13–6–10–15–2–17–3–19–7–16–8–11–14–9–12–5
-    ========================================================= -->
-
-    <g id="numberRing" font-family="Arial" font-size="70" fill="#ffffff" text-anchor="middle">
-
-        <text x="500" y="55">20</text>
-        <text x="640" y="85" transform="rotate(18 640 85)">1</text>
-        <text x="760" y="170" transform="rotate(36 760 170)">18</text>
-        <text x="830" y="300" transform="rotate(54 830 300)">4</text>
-        <text x="860" y="450" transform="rotate(72 860 450)">13</text>
-        <text x="830" y="600" transform="rotate(90 830 600)">6</text>
-        <text x="760" y="730" transform="rotate(108 760 730)">10</text>
-        <text x="640" y="815" transform="rotate(126 640 815)">15</text>
-        <text x="500" y="845" transform="rotate(144 500 845)">2</text>
-        <text x="360" y="815" transform="rotate(162 360 815)">17</text>
-        <text x="240" y="730" transform="rotate(180 240 730)">3</text>
-        <text x="170" y="600" transform="rotate(198 170 600)">19</text>
-        <text x="140" y="450" transform="rotate(216 140 450)">7</text>
-        <text x="170" y="300" transform="rotate(234 170 300)">16</text>
-        <text x="240" y="170" transform="rotate(252 240 170)">8</text>
-        <text x="360" y="85" transform="rotate(270 360 85)">11</text>
-        <text x="500" y="55" transform="rotate(288 500 55)">14</text>
-        <text x="640" y="85" transform="rotate(306 640 85)">9</text>
-        <text x="760" y="170" transform="rotate(324 760 170)">12</text>
-        <text x="830" y="300" transform="rotate(342 830 300)">5</text>
-
-    </g>
-
-</svg>
-
-</div> <!-- end dartboardContainer -->
-<!-- =========================================================
-     CHUNK 3 — FULL JAVASCRIPT ENGINE
-========================================================= -->
+</div>
 
 <script>
-
-/* ============================================================
-   GLOBAL STATE
-=========================================================== */
-
 let players = [];
 let currentPlayer = 0;
 let roundDart = 1;
 
 let gameState = {
-    targets: {},     // per player: {20:{marks:0}, 19:{marks:0}, ...}
-    scores: {},      // per player: numeric score
-    history: [],     // undo stack
+    targets: {},
+    scores: {},
+    history: []
 };
 
 const TACTICS_NUMBERS = [20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1];
 
-/* ============================================================
-   INITIALIZATION
-=========================================================== */
-
 window.onload = () => {
-    // Start with empty players until user adds them
-    players = [];
-
+    players = ["Player 1"];
     renderPlayerList();
 
     document.getElementById("addPlayerBtn").onclick = addPlayer;
     document.getElementById("startGameBtn").onclick = startGame;
-
     document.getElementById("newGameBtn").onclick = () => location.reload();
     document.getElementById("undoBtn").onclick = undo;
     document.getElementById("tourneyBtn").onclick = startTournament;
@@ -568,14 +432,61 @@ window.onload = () => {
     setupViewToggle();
 };
 
+function renderPlayerList() {
+    const list = document.getElementById("playerList");
+    list.innerHTML = players.map((name, i) => `
+        <div style="display:flex; gap:8px; margin:6px 0;">
+            <input
+                type="text"
+                value="${escapeHtml(name)}"
+                data-index="${i}"
+                placeholder="Player name"
+                style="flex:1; padding:8px; border-radius:6px; border:1px solid var(--hc-border); background:#111; color:var(--hc-text);"
+            />
+            <button class="tourneyButton" onclick="removePlayer(${i})">X</button>
+        </div>
+    `).join("");
 
-/* ============================================================
-   PLAYER SETUP
-=========================================================== */
+    list.querySelectorAll("input").forEach(inp => {
+        inp.addEventListener("input", e => {
+            players[Number(e.target.dataset.index)] = e.target.value;
+        });
+    });
+}
 
-function initPlayers() {
-    // For now: 2 players default. You can expand later.
-    players = ["Player 1", "Player 2"];
+function addPlayer() {
+    players.push(`Player ${players.length + 1}`);
+    renderPlayerList();
+}
+
+function removePlayer(i) {
+    players.splice(i, 1);
+    if (players.length === 0) players.push("Player 1");
+    renderPlayerList();
+}
+
+function startGame() {
+    players = players.map(p => p.trim()).filter(Boolean);
+    if (players.length < 1) {
+        alert("Add at least one player.");
+        return;
+    }
+
+    currentPlayer = 0;
+    roundDart = 1;
+    gameState = { targets: {}, scores: {}, history: [] };
+
+    initGameState();
+    bindSVGSegments();
+    updateScoreboard();
+
+    document.getElementById("playerSetupPanel").style.display = "none";
+    document.getElementById("gameControlPanel").style.display = "block";
+    document.getElementById("boardView").classList.remove("activeView");
+    document.getElementById("scoreView").classList.add("activeView");
+    document.getElementById("viewToggle").textContent = "Show Board";
+
+    saveGame();
 }
 
 function initGameState() {
@@ -592,55 +503,32 @@ function initGameState() {
     });
 }
 
-/* ============================================================
-   SVG SEGMENT BINDING
-=========================================================== */
-
 function bindSVGSegments() {
     const allSegs = document.querySelectorAll("#dartboard path, #dartboard circle");
-
     allSegs.forEach(seg => {
         seg.addEventListener("click", () => handleHit(seg.id));
     });
 }
 
-/* ============================================================
-   HANDLE HIT
-=========================================================== */
-
 function handleHit(segId) {
     const player = players[currentPlayer];
-
-    // Save state for undo
     pushHistory();
 
-    // Determine segment type
-    let value = parseSegmentValue(segId);
-    let marks = parseSegmentMarks(segId);
+    const value = parseSegmentValue(segId);
+    const marks = parseSegmentMarks(segId);
 
     applyMarks(player, value, marks);
-
     animateHit(segId);
-
     advanceThrow();
     updateScoreboard();
+    saveGame();
 }
-
-/* ============================================================
-   PARSE SEGMENT VALUE
-=========================================================== */
 
 function parseSegmentValue(segId) {
     if (segId.includes("Bull-D")) return "Bull-D";
     if (segId.includes("Bull-S")) return "Bull-S";
-
-    // seg-20-SO → extract 20
-    return parseInt(segId.split("-")[1]);
+    return parseInt(segId.split("-")[1], 10);
 }
-
-/* ============================================================
-   PARSE MARKS (SINGLE/TRIPLE/DOUBLE)
-=========================================================== */
 
 function parseSegmentMarks(segId) {
     if (segId.includes("-T")) return 3;
@@ -648,64 +536,42 @@ function parseSegmentMarks(segId) {
     return 1;
 }
 
-/* ============================================================
-   APPLY MARKS (TACTICS RULES)
-=========================================================== */
-
 function applyMarks(player, value, marks) {
-    let target = gameState.targets[player][value];
-
+    const target = gameState.targets[player][value];
     if (!target) return;
 
-    let before = target.marks;
-    let after = before + marks;
+    const before = target.marks;
+    const after = before + marks;
 
     if (after <= 3) {
         target.marks = after;
-    } else {
-        // Score overflow
-        let overflow = after - 3;
-        target.marks = 3;
-
-        // Add scoring to player
-        let scoreValue = (value === "Bull-D") ? 50 :
-                         (value === "Bull-S") ? 25 : value;
-
-        gameState.scores[player] += overflow * scoreValue;
+        return;
     }
-}
 
-/* ============================================================
-   ANIMATION: FLASH → HARD MAGENTA GLOW → LOCK
-=========================================================== */
+    const overflow = after - 3;
+    target.marks = 3;
+
+    const scoreValue = (value === "Bull-D") ? 50 : (value === "Bull-S") ? 25 : value;
+    gameState.scores[player] += overflow * scoreValue;
+}
 
 function animateHit(segId) {
     const seg = document.getElementById(segId);
+    if (!seg) return;
 
-    seg.classList.remove("flashWhite","glowMagenta","lockedX");
-    void seg.offsetWidth; // restart animation
-
+    seg.classList.remove("flashWhite", "glowMagenta", "lockedX");
+    void seg.offsetWidth;
     seg.classList.add("flashWhite");
 
-    setTimeout(() => {
-        seg.classList.add("glowMagenta");
-    }, 180);
+    setTimeout(() => seg.classList.add("glowMagenta"), 180);
 
-    // If closed, lock it
-    let value = parseSegmentValue(segId);
-    let player = players[currentPlayer];
-    let marks = gameState.targets[player][value].marks;
-
-    if (marks >= 3) {
-        setTimeout(() => {
-            seg.classList.add("lockedX");
-        }, 300);
+    const player = players[currentPlayer];
+    const value = parseSegmentValue(segId);
+    const target = gameState.targets[player]?.[value];
+    if (target && target.marks >= 3) {
+        setTimeout(() => seg.classList.add("lockedX"), 300);
     }
 }
-
-/* ============================================================
-   ADVANCE THROW / PLAYER TURN
-=========================================================== */
 
 function advanceThrow() {
     roundDart++;
@@ -714,10 +580,6 @@ function advanceThrow() {
         currentPlayer = (currentPlayer + 1) % players.length;
     }
 }
-
-/* ============================================================
-   SCOREBOARD UPDATE
-=========================================================== */
 
 function updateScoreboard() {
     let html = `
@@ -730,47 +592,44 @@ function updateScoreboard() {
             </tr>
     `;
 
-    players.forEach((p,i) => {
-        html += `<tr class="${i===currentPlayer ? 'activePlayerRow' : ''}">
-            <td>${p}</td>
-            <td>${gameState.scores[p]}</td>
-        `;
+    players.forEach((p, i) => {
+        html += `<tr class="${i === currentPlayer ? "activePlayerRow" : ""}">
+            <td>${escapeHtml(p)}</td>
+            <td>${gameState.scores[p] ?? 0}</td>`;
 
         TACTICS_NUMBERS.forEach(n => {
-            let m = gameState.targets[p][n].marks;
-            html += `<td class="${m>=3 ? 'closedCell' : ''}">${m}</td>`;
+            const m = gameState.targets[p][n].marks;
+            html += `<td class="${m >= 3 ? "closedCell" : ""}">${m}</td>`;
         });
 
-        let bullMarks = gameState.targets[p]["Bull-D"].marks + gameState.targets[p]["Bull-S"].marks;
-        html += `<td class="${bullMarks>=3 ? 'closedCell' : ''}">${bullMarks}</td>`;
-
-        html += `</tr>`;
+        const bullMarks = (gameState.targets[p]["Bull-D"].marks + gameState.targets[p]["Bull-S"].marks);
+        html += `<td class="${bullMarks >= 3 ? "closedCell" : ""}">${bullMarks}</td></tr>`;
     });
 
     html += `</table>`;
-
     document.getElementById("scoreView").innerHTML = html;
 }
 
-/* ============================================================
-   UNDO SYSTEM
-=========================================================== */
-
 function pushHistory() {
-    const snapshot = JSON.stringify(gameState);
-    gameState.history.push(snapshot);
+    gameState.history.push(JSON.stringify({
+        players,
+        currentPlayer,
+        roundDart,
+        gameState
+    }));
 }
 
 function undo() {
     if (gameState.history.length === 0) return;
-    const last = gameState.history.pop();
-    gameState = JSON.parse(last);
+    const last = JSON.parse(gameState.history.pop());
+    players = last.players;
+    currentPlayer = last.currentPlayer;
+    roundDart = last.roundDart;
+    gameState = last.gameState;
+    renderPlayerList();
     updateScoreboard();
+    saveGame();
 }
-
-/* ============================================================
-   VIEW TOGGLE (BOARD <-> SCORE/STATS)
-=========================================================== */
 
 function setupViewToggle() {
     const btn = document.getElementById("viewToggle");
@@ -790,10 +649,6 @@ function setupViewToggle() {
     };
 }
 
-/* ============================================================
-   LOCAL STORAGE (AUTO-SAVE)
-=========================================================== */
-
 function saveGame() {
     localStorage.setItem("tacticsUltraSave", JSON.stringify({
         players,
@@ -807,25 +662,26 @@ function loadGame() {
     const data = localStorage.getItem("tacticsUltraSave");
     if (!data) return;
     const obj = JSON.parse(data);
-
-    players = obj.players;
-    currentPlayer = obj.currentPlayer;
-    roundDart = obj.roundDart;
-    gameState = obj.gameState;
-
+    players = obj.players || [];
+    currentPlayer = obj.currentPlayer || 0;
+    roundDart = obj.roundDart || 1;
+    gameState = obj.gameState || gameState;
+    renderPlayerList();
     updateScoreboard();
 }
-
-/* ============================================================
-   TOURNAMENT MODE (SIMPLE VERSION)
-=========================================================== */
 
 function startTournament() {
     alert("Tournament mode placeholder — expand later!");
 }
 
+function escapeHtml(str) {
+    return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+}
 </script>
-
 </body>
 </html>
-
