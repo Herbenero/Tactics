@@ -553,12 +553,21 @@ const TACTICS_NUMBERS = [20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1];
 =========================================================== */
 
 window.onload = () => {
-    initPlayers();
-    initGameState();
-    bindSVGSegments();
-    updateScoreboard();
+    // Start with empty players until user adds them
+    players = [];
+
+    renderPlayerList();
+
+    document.getElementById("addPlayerBtn").onclick = addPlayer;
+    document.getElementById("startGameBtn").onclick = startGame;
+
+    document.getElementById("newGameBtn").onclick = () => location.reload();
+    document.getElementById("undoBtn").onclick = undo;
+    document.getElementById("tourneyBtn").onclick = startTournament;
+
     setupViewToggle();
 };
+
 
 /* ============================================================
    PLAYER SETUP
