@@ -388,8 +388,7 @@ svg {
                 <text x="500" y="845" transform="rotate(144 500 845)">2</text>
                 <text x="360" y="815" transform="rotate(162 360 815)">17</text>
                 <text x="240" y="730" transform="rotate(180 240 730)">3</text>
-                <text x="170" y="600" transform="rotate(198 170 600)">19</text>
-                <text x="140" y="450" transform="rotate(216 140 450)">7</text>
+                <text x="170" y="600" transform="rotate(198 170 600)">19</text> <text x="140" y="450" transform="rotate(216 140 450)">7</text>
                 <text x="170" y="300" transform="rotate(234 170 300)">16</text>
                 <text x="240" y="170" transform="rotate(252 240 170)">8</text>
                 <text x="360" y="85" transform="rotate(270 360 85)">11</text>
@@ -430,6 +429,7 @@ window.onload = () => {
     document.getElementById("tourneyBtn").onclick = startTournament;
 
     setupViewToggle();
+    loadGame();
 };
 
 function renderPlayerList() {
@@ -482,9 +482,11 @@ function startGame() {
 
     document.getElementById("playerSetupPanel").style.display = "none";
     document.getElementById("gameControlPanel").style.display = "block";
-    document.getElementById("boardView").classList.remove("activeView");
+    
+    // ADJUSTMENT: Keep the board visible and append scoreboard to view concurrently
+    document.getElementById("boardView").classList.add("activeView");
     document.getElementById("scoreView").classList.add("activeView");
-    document.getElementById("viewToggle").textContent = "Show Board";
+    document.getElementById("viewToggle").textContent = "Hide Scoreboard";
 
     saveGame();
 }
@@ -511,6 +513,8 @@ function bindSVGSegments() {
 }
 
 function handleHit(segId) {
+    if (!segId || segId === "dartboard") return; // Avoid catching parent clicks
+    
     const player = players[currentPlayer];
     pushHistory();
 
@@ -537,6 +541,9 @@ function parseSegmentMarks(segId) {
 }
 
 function applyMarks(player, value, marks) {
+    // ADJUSTMENT: Handle potential parsing errors if invalid structural lines are hit
+    if (!value || (isNaN(value) && value !== "Bull-D" && value !== "Bull-S")) return;
+
     const target = gameState.targets[player][value];
     if (!target) return;
 
@@ -598,11 +605,11 @@ function updateScoreboard() {
             <td>${gameState.scores[p] ?? 0}</td>`;
 
         TACTICS_NUMBERS.forEach(n => {
-            const m = gameState.targets[p][n].marks;
+            const m = gameState.targets[p][n]?.marks ?? 0;
             html += `<td class="${m >= 3 ? "closedCell" : ""}">${m}</td>`;
         });
 
-        const bullMarks = (gameState.targets[p]["Bull-D"].marks + gameState.targets[p]["Bull-S"].marks);
+        const bullMarks = ((gameState.targets[p]["Bull-D"]?.marks ?? 0) + (gameState.targets[p]["Bull-S"]?.marks ?? 0));
         html += `<td class="${bullMarks >= 3 ? "closedCell" : ""}">${bullMarks}</td></tr>`;
     });
 
@@ -637,14 +644,12 @@ function setupViewToggle() {
     const score = document.getElementById("scoreView");
 
     btn.onclick = () => {
-        if (board.classList.contains("activeView")) {
-            board.classList.remove("activeView");
-            score.classList.add("activeView");
-            btn.textContent = "Show Board";
-        } else {
+        if (score.classList.contains("activeView")) {
             score.classList.remove("activeView");
-            board.classList.add("activeView");
             btn.textContent = "Show Score / Stats";
+        } else {
+            score.classList.add("activeView");
+            btn.textContent = "Hide Scoreboard";
         }
     };
 }
@@ -666,6 +671,13 @@ function loadGame() {
     currentPlayer = obj.currentPlayer || 0;
     roundDart = obj.roundDart || 1;
     gameState = obj.gameState || gameState;
+    
+    if (players.length > 0 && Object.keys(gameState.targets).length > 0) {
+        document.getElementById("playerSetupPanel").style.display = "none";
+        document.getElementById("gameControlPanel").style.display = "block";
+        bindSVGSegments();
+    }
+    
     renderPlayerList();
     updateScoreboard();
 }
