@@ -48,6 +48,14 @@ td, th {
 th {
     background: #e0e0e0;
 }
+.panel-btn {
+    background: #e0e0e0;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+}
+.panel-btn:hover {
+    background: #d0d0d0;
+}
 </style>
 </head>
 <body> 
@@ -58,7 +66,14 @@ th {
     <label>Players (comma separated):</label><br> 
     <input id="names" style="width:400px; padding: 8px; font-size: 16px;" value="Player 1,Player 2"> 
     <button onclick="startGame()">Start</button> 
+    <button class="panel-btn" onclick="showLeaderboard()">Leaderboard</button>
 </div> 
+
+<div id="leaderboardView" style="display:none;">
+    <h2>Global Leaderboard</h2>
+    <div id="leaderboardContent"></div>
+    <button class="panel-btn" onclick="hideLeaderboard()">Back to Setup</button>
+</div>
 
 <div id="game" style="display:none"> 
     <div id="banner"></div> 
@@ -80,6 +95,10 @@ th {
 const targets = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 'B']; 
 let players = [], cur = 0, darts = 0, mult = 1, sel = null, hist = [];
 let roundCounter = 1;
+let gameFinished = false;
+
+// Global Stats database structure stored in localStorage
+let globalStats = JSON.parse(localStorage.getItem("cricketGlobalStats")) || {};
 
 window.onload = () => {
     loadGame();
@@ -87,15 +106,23 @@ window.onload = () => {
 
 function startGame() {
     players = document.getElementById('names').value.split(',').map(x => x.trim()).filter(Boolean)
-        .map(n => ({name: n, score: 0, marks: Object.fromEntries(targets.map(t => [t, 0]))})); 
+        .map(n => ({
+            name: n, 
+            score: 0, 
+            marks: Object.fromEntries(targets.map(t => [t, 0])),
+            totalMarksObtained: 0,
+            totalDartsThrown: 0
+        })); 
     
     cur = 0;
     darts = 0;
     mult = 1;
     roundCounter = 1;
     hist = [];
+    gameFinished = false;
     
     document.getElementById('setup').style.display = 'none'; 
+    document.getElementById('leaderboardView').style.display = 'none';
     document.getElementById('game').style.display = 'block'; 
     
     initTargetButtons();
@@ -130,19 +157,25 @@ function saveStateToHistory() {
         cur: cur,
         darts: darts,
         mult: mult,
-        roundCounter: roundCounter
+        roundCounter: roundCounter,
+        gameFinished: gameFinished
     });
 }
 
 function hit(t) {
+    if (gameFinished) return;
     sel = t; 
     let p = players[cur]; 
     saveStateToHistory(); 
     
+    p.totalDartsThrown++;
     let m = mult; 
     if (targets.includes(t)) {
         let old = p.marks[t]; 
+        let added = Math.min(3, old + m) - old;
         p.marks[t] = Math.min(3, old + m); 
+        p.totalMarksObtained += added;
+
         let extra = Math.max(0, old + m - 3); 
         if (extra > 0) {
             let othersClosed = players.every((pl, i) => i === cur || pl.marks[t] >= 3); 
@@ -157,7 +190,9 @@ function hit(t) {
 } 
 
 function miss() {
+    if (gameFinished) return;
     saveStateToHistory();
+    players[cur].totalDartsThrown++;
     advanceTurn();
 } 
 
@@ -186,8 +221,11 @@ function undo() {
     darts = lastState.darts;
     mult = lastState.mult;
     roundCounter = lastState.roundCounter;
+    gameFinished = lastState.gameFinished;
 
-    document.getElementById('banner').style.display = 'none'; 
+    if (!gameFinished) {
+        document.getElementById('banner').style.display = 'none'; 
+    }
     updSel();
     render(); 
     saveGame();
@@ -207,15 +245,106 @@ function closed(pl) {
 } 
 
 function checkWin() {
+    if (gameFinished) return;
     let max = Math.max(...players.map(p => p.score)); 
     for (let p of players) {
         if (closed(p) && p.score === max) {
+            gameFinished = true;
             let b = document.getElementById('banner'); 
             b.style.display = 'block'; 
             b.textContent = p.name + " WINS!"; 
+            processEndGameStats(p.name);
+            break;
         } 
     } 
 } 
+
+function processEndGameStats(winnerName) {
+    // Ensure all players exist in global profile registry
+    players.forEach(p => {
+        if (!globalStats[p.name]) {
+            globalStats[p.name] = { name: p.name, elo: 1200, wins: 0, losses: 0, totalGames: 0, totalMarks: 0, totalDarts: 0, totalScore: 0 };
+        }
+    });
+
+    // 1. Calculate and update Elo changes (Multiplayer implementation via average opponents)
+    players.forEach(p => {
+        if (p.name === winnerName) return;
+        
+        let eloW = globalStats[winnerName].elo;
+        let eloL = globalStats[p.name].elo;
+        
+        let expectedW = 1 / (1 + Math.pow(10, (eloL - eloW) / 400));
+        let expectedL = 1 / (1 + Math.pow(10, (eloW - eloL) / 400));
+        
+        let K = 32;
+        globalStats[winnerName].elo += Math.round(K * (1 - expectedW));
+        globalStats[p.name].elo += Math.round(K * (0 - expectedL));
+    });
+
+    // 2. Aggregate traditional metrics accumulation
+    players.forEach(p => {
+        let profile = globalStats[p.name];
+        profile.totalGames++;
+        profile.totalMarks += p.totalMarksObtained;
+        profile.totalDarts += p.totalDartsThrown;
+        profile.totalScore += p.score;
+        
+        if (p.name === winnerName) {
+            profile.wins++;
+        } else {
+            profile.losses++;
+        }
+    });
+
+    localStorage.setItem("cricketGlobalStats", JSON.stringify(globalStats));
+}
+
+function showLeaderboard() {
+    document.getElementById('setup').style.display = 'none';
+    document.getElementById('game').style.display = 'none';
+    document.getElementById('leaderboardView').style.display = 'block';
+
+    let list = Object.values(globalStats).sort((a, b) => b.elo - a.elo);
+    
+    let html = `<table>
+        <tr>
+            <th>Rank</th>
+            <th>Player</th>
+            <th>Elo</th>
+            <th>W / L</th>
+            <th>Win %</th>
+            <th>MPR</th>
+            <th>Avg Score</th>
+        </tr>`;
+        
+    if (list.length === 0) {
+        html += `<tr><td colspan="7">No games logged yet. Complete a match to build history!</td></tr>`;
+    } else {
+        list.forEach((p, idx) => {
+            let winPct = p.totalGames > 0 ? ((p.wins / p.totalGames) * 100).toFixed(1) + '%' : '0%';
+            let mpr = p.totalDarts > 0 ? ((p.totalMarks / p.totalDarts) * 3).toFixed(2) : '0.00';
+            let avgScore = p.totalGames > 0 ? (p.totalScore / p.totalGames).toFixed(0) : '0';
+            
+            html += `<tr>
+                <td>${idx + 1}</td>
+                <td><strong>${p.name}</strong></td>
+                <td>${p.elo}</td>
+                <td>${p.wins} - ${p.losses}</td>
+                <td>${winPct}</td>
+                <td>${mpr}</td>
+                <td>${avgScore}</td>
+            </tr>`;
+        });
+    }
+    html += `</table>`;
+    document.getElementById('leaderboardContent').innerHTML = html;
+}
+
+function hideLeaderboard() {
+    document.getElementById('leaderboardView').style.display = 'none';
+    document.getElementById('setup').style.display = 'block';
+}
 
 function render() {
     if (!players.length) return;
@@ -241,7 +370,8 @@ function saveGame() {
         darts,
         mult,
         roundCounter,
-        hist
+        hist,
+        gameFinished
     }));
 }
 
@@ -256,6 +386,7 @@ function loadGame() {
     mult = obj.mult || 1;
     roundCounter = obj.roundCounter || 1;
     hist = obj.hist || [];
+    gameFinished = obj.gameFinished || false;
     
     if (players.length > 0) {
         document.getElementById('setup').style.display = 'none';
@@ -263,7 +394,9 @@ function loadGame() {
         initTargetButtons();
         updSel();
         render();
-        checkWin();
+        if (gameFinished) {
+            checkWin();
+        }
     }
 }
 </script> 
