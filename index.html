@@ -1,113 +1,213 @@
-
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Cricket- Tactics</title>
-<style>
-body{font-family:Arial;margin:20px;background:#f5f5f5}
+<html>
+<head>
+<meta charset="utf-8">
+<title>Cricket- Tactics</title> 
+<style> 
+body {
+    font-family: Arial;
+    margin: 20px;
+    background: #f5f5f5;
+} 
 button {
-  margin: 6px;           /* Increased from 2px for better spacing */
-  padding: 15px 20px;    /* Increased from 8px 10px for a larger touch area */
-  font-size: 18px;       /* Added to make the labels easier to read */
-  min-width: 60px;       /* Ensures a consistent, easy-to-hit width */
-  cursor: pointer;
-}
- #nums {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;        /* Adds consistent spacing between buttons */
-  margin-bottom: 20px;
-}
-
+    margin: 6px;           
+    padding: 15px 20px;    
+    font-size: 18px;       
+    min-width: 60px;       
+    cursor: pointer; 
+} 
+#nums {
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 10px;        
+    margin-bottom: 20px; 
+} 
 #nums button {
-  flex: 1 1 60px;   /* Allows buttons to grow and fill rows, with a 60px base */
-  max-width: 100px; /* Prevents buttons from becoming awkwardly wide on tablets */
+    flex: 1 1 60px;   
+    max-width: 100px; 
+} 
+#banner {
+    display: none;
+    background: gold;
+    padding: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 10px 0;
+    text-align: center; /* Centered the winner's name */
+} 
+table {
+    border-collapse: collapse;
+    margin: 20px auto; /* Centered the scoreboard table */
+    font-size: 22px;   /* Made scoreboard larger */
 }
-#banner{display:none;background:gold;padding:15px;font-size:28px;font-weight:bold;margin:10px 0}
-table{border-collapse:collapse}td,th{border:1px solid #999;padding:4px 6px;text-align:center}
-</style></head><body>
-<h1>Cricket-Tactics</h1>
-<div id="setup">
-<label>Players (comma separated):</label><br>
-<input id="names" style="width:400px" value="Player 1,Player 2">
-<button onclick="startGame()">Start</button>
-</div>
-<div id="game" style="display:none">
-<div id="banner"></div>
-<h3 id="turn"></h3>
-<div id="sel"></div>
-<div id="nums"></div>
-<div>
-<button onclick="mult=1;updSel()">Single</button>
-<button onclick="mult=2;updSel()">Double</button>
-<button onclick="mult=3;updSel()">Triple</button>
-<button onclick="miss()">Miss</button>
-<button onclick="undo()">Undo</button>
-</div>
-<div id="score"></div>
-</div>
-<script>
-const targets=[10,11,12,13,14,15,16,17,18,19,20,'B'];
-let players=[],cur=0,darts=0,mult=1,sel=null,hist=[];
-function startGame(){
- players=document.getElementById('names').value.split(',').map(x=>x.trim()).filter(Boolean)
- .map(n=>({name:n,score:0,marks:Object.fromEntries(targets.map(t=>[t,0]))}));
- document.getElementById('setup').style.display='none';
- document.getElementById('game').style.display='block';
- let ndiv=document.getElementById('nums');ndiv.innerHTML='';
- for(let i=1;i<=20;i++){let b=document.createElement('button');b.textContent=i;b.onclick=()=>hit(i);ndiv.appendChild(b);}
- let bb=document.createElement('button');bb.textContent='Bull';bb.onclick=()=>hit('B');ndiv.appendChild(bb);
- render();
+td, th {
+    border: 1px solid #999;
+    padding: 12px 16px; /* Increased padding for a larger table appearance */
+    text-align: center;
+} 
+th {
+    background: #e0e0e0;
 }
-function updSel(){document.getElementById('sel').textContent="Multiplier: "+mult;}
-updSel();
-function hit(t){
- sel=t;
- let p=players[cur];
- let before=JSON.parse(JSON.stringify(players));
- let m=mult;
- if(targets.includes(t)){
-   let old=p.marks[t];
-   let add=Math.min(m,3-old);
-   p.marks[t]=Math.min(3,old+m);
-   let extra=Math.max(0,old+m-3);
-   if(extra>0){
-      let othersClosed=players.every((pl,i)=>i===cur||pl.marks[t]>=3);
-      if(!othersClosed){
-        let val=(t==='B'?25:t);
-        p.score+=extra*val;
-      }
-   }
- }
- hist.push(before);
- darts++;
- if(darts>=3){darts=0;cur=(cur+1)%players.length;mult=1;updSel();}
- render();checkWin();
-}
-function miss(){hist.push(JSON.parse(JSON.stringify(players)));darts++;if(darts>=3){darts=0;cur=(cur+1)%players.length;mult=1;updSel();}render();}
-function undo(){if(!hist.length)return;players=hist.pop();render();}
-function closed(pl){return targets.every(t=>pl.marks[t]>=3);}
-function checkWin(){
- let max=Math.max(...players.map(p=>p.score));
- for(let p of players){
-  if(closed(p)&&p.score===max){
-    let b=document.getElementById('banner');
-    b.style.display='block';
-    b.textContent=p.name+" WINS!";
-  }
- }
-}
-function render(){
- document.getElementById('turn').textContent=players[cur].name+"'s Turn - Dart "+(darts+1);
- let h='<table><tr><th>Player</th><th>Pts</th>';
- targets.forEach(t=>h+='<th>'+t+'</th>');
- h+='</tr>';
- players.forEach(p=>{
-  h+='<tr><td>'+p.name+'</td><td>'+p.score+'</td>';
-  targets.forEach(t=>h+='<td>'+p.marks[t]+'</td>');
-  h+='</tr>';
- });
- h+='</table>';
- document.getElementById('score').innerHTML=h;
-}
-</script>
-</body></html>
+</style>
+</head>
+<body> 
 
+<h1>Cricket-Tactics</h1> 
+
+<div id="setup"> 
+    <label>Players (comma separated):</label><br> 
+    <input id="names" style="width:400px; padding: 8px; font-size: 16px;" value="Player 1,Player 2"> 
+    <button onclick="startGame()">Start</button> 
+</div> 
+
+<div id="game" style="display:none"> 
+    <div id="banner"></div> 
+    <h3 id="turn" style="text-align: center; font-size: 24px;"></h3> 
+    <div id="sel" style="text-align: center; margin-bottom: 10px; font-size: 18px;"></div> 
+    <div id="nums"></div> 
+    <div style="text-align: center;"> 
+        <button onclick="mult=1;updSel()">Single</button> 
+        <button onclick="mult=2;updSel()">Double</button> 
+        <button onclick="mult=3;updSel()">Triple</button> 
+        <button onclick="miss()">Miss</button> 
+        <button onclick="undo()">Undo</button> 
+    </div> 
+    <div id="score"></div> 
+</div> 
+
+<script> 
+const targets = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 'B']; 
+let players = [], cur = 0, darts = 0, mult = 1, sel = null, hist = [];
+let roundCounter = 1; // Round tracking variable
+
+function startGame() {
+    players = document.getElementById('names').value.split(',').map(x => x.trim()).filter(Boolean)
+        .map(n => ({name: n, score: 0, marks: Object.fromEntries(targets.map(t => [t, 0]))})); 
+    
+    document.getElementById('setup').style.display = 'none'; 
+    document.getElementById('game').style.display = 'block'; 
+    
+    let ndiv = document.getElementById('nums');
+    ndiv.innerHTML = ''; 
+    
+    for (let i = 1; i <= 20; i++) {
+        let b = document.createElement('button');
+        b.textContent = i;
+        b.onclick = () => hit(i);
+        ndiv.appendChild(b);
+    } 
+    let bb = document.createElement('button');
+    bb.textContent = 'Bull';
+    bb.onclick = () => hit('B');
+    ndiv.appendChild(bb); 
+    
+    roundCounter = 1;
+    render(); 
+} 
+
+function updSel() {
+    document.getElementById('sel').textContent = "Multiplier: " + mult; 
+} 
+updSel(); 
+
+function saveStateToHistory() {
+    hist.push(JSON.stringify({
+        players: players,
+        cur: cur,
+        darts: darts,
+        mult: mult,
+        roundCounter: roundCounter
+    }));
+}
+
+function hit(t) {
+    sel = t; 
+    let p = players[cur]; 
+    saveStateToHistory(); 
+    
+    let m = mult; 
+    if (targets.includes(t)) {
+        let old = p.marks[t]; 
+        p.marks[t] = Math.min(3, old + m); 
+        let extra = Math.max(0, old + m - 3); 
+        if (extra > 0) {
+            let othersClosed = players.every((pl, i) => i === cur || pl.marks[t] >= 3); 
+            if (!othersClosed) {
+                let val = (t === 'B' ? 25 : t); 
+                p.score += extra * val; 
+            } 
+        } 
+    } 
+    
+    advanceTurn();
+} 
+
+function miss() {
+    saveStateToHistory();
+    advanceTurn();
+} 
+
+function advanceTurn() {
+    darts++; 
+    if (darts >= 3) {
+        darts = 0; 
+        cur = (cur + 1) % players.length; 
+        if (cur === 0) {
+            roundCounter++; // New round starts when rotation goes back to player 1
+        }
+        mult = 1; 
+        updSel();
+    } 
+    render(); 
+    checkWin();
+}
+
+function undo() {
+    if (!hist.length) return; 
+    
+    // Completely restore snapshot including game layout states
+    let lastState = JSON.parse(hist.pop());
+    players = lastState.players;
+    cur = lastState.cur;
+    darts = lastState.darts;
+    mult = lastState.mult;
+    roundCounter = lastState.roundCounter;
+
+    document.getElementById('banner').style.display = 'none'; // Hide banner if win undone
+    updSel();
+    render(); 
+} 
+
+function closed(pl) {
+    return targets.every(t => pl.marks[t] >= 3);
+} 
+
+function checkWin() {
+    let max = Math.max(...players.map(p => p.score)); 
+    for (let p of players) {
+        if (closed(p) && p.score === max) {
+            let b = document.getElementById('banner'); 
+            b.style.display = 'block'; 
+            b.textContent = p.name + " WINS!"; 
+        } 
+    } 
+} 
+
+function render() {
+    document.getElementById('turn').textContent = `Round ${roundCounter} — ${players[cur].name}'s Turn (Dart ${darts + 1})`; 
+    
+    let h = '<table><tr><th>Player</th><th>Pts</th>'; 
+    targets.forEach(t => h += '<th>' + t + '</th>'); 
+    h += '</tr>'; 
+    
+    players.forEach(p => {
+        h += '<tr><td>' + p.name + '</td><td>' + p.score + '</td>'; 
+        targets.forEach(t => h += '<td>' + p.marks[t] + '</td>'); 
+        h += '</tr>'; 
+    }); 
+    h += '</table>'; 
+    document.getElementById('score').innerHTML = h; 
+} 
+</script> 
+</body>
+</html>
