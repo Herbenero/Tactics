@@ -33,16 +33,16 @@ button {
     font-size: 28px;
     font-weight: bold;
     margin: 10px 0;
-    text-align: center; /* Centered the winner's name */
+    text-align: center;
 } 
 table {
     border-collapse: collapse;
-    margin: 20px auto; /* Centered the scoreboard table */
-    font-size: 22px;   /* Made scoreboard larger */
-}
+    margin: 20px auto; 
+    font-size: 22px;   
+} 
 td, th {
     border: 1px solid #999;
-    padding: 12px 16px; /* Increased padding for a larger table appearance */
+    padding: 12px 16px; 
     text-align: center;
 } 
 th {
@@ -71,6 +71,7 @@ th {
         <button onclick="mult=3;updSel()">Triple</button> 
         <button onclick="miss()">Miss</button> 
         <button onclick="undo()">Undo</button> 
+        <button onclick="newGame()" style="background: #ff4d4d; color: white; border: 1px solid #cc0000; font-weight: bold;">New Game</button> 
     </div> 
     <div id="score"></div> 
 </div> 
@@ -78,15 +79,31 @@ th {
 <script> 
 const targets = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 'B']; 
 let players = [], cur = 0, darts = 0, mult = 1, sel = null, hist = [];
-let roundCounter = 1; // Round tracking variable
+let roundCounter = 1;
+
+window.onload = () => {
+    loadGame();
+};
 
 function startGame() {
     players = document.getElementById('names').value.split(',').map(x => x.trim()).filter(Boolean)
         .map(n => ({name: n, score: 0, marks: Object.fromEntries(targets.map(t => [t, 0]))})); 
     
+    cur = 0;
+    darts = 0;
+    mult = 1;
+    roundCounter = 1;
+    hist = [];
+    
     document.getElementById('setup').style.display = 'none'; 
     document.getElementById('game').style.display = 'block'; 
     
+    initTargetButtons();
+    render(); 
+    saveGame();
+} 
+
+function initTargetButtons() {
     let ndiv = document.getElementById('nums');
     ndiv.innerHTML = ''; 
     
@@ -99,11 +116,8 @@ function startGame() {
     let bb = document.createElement('button');
     bb.textContent = 'Bull';
     bb.onclick = () => hit('B');
-    ndiv.appendChild(bb); 
-    
-    roundCounter = 1;
-    render(); 
-} 
+    ndiv.appendChild(bb);
+}
 
 function updSel() {
     document.getElementById('sel').textContent = "Multiplier: " + mult; 
@@ -111,13 +125,13 @@ function updSel() {
 updSel(); 
 
 function saveStateToHistory() {
-    hist.push(JSON.stringify({
-        players: players,
+    hist.push({
+        players: JSON.parse(JSON.stringify(players)),
         cur: cur,
         darts: darts,
         mult: mult,
         roundCounter: roundCounter
-    }));
+    });
 }
 
 function hit(t) {
@@ -153,30 +167,40 @@ function advanceTurn() {
         darts = 0; 
         cur = (cur + 1) % players.length; 
         if (cur === 0) {
-            roundCounter++; // New round starts when rotation goes back to player 1
+            roundCounter++; 
         }
         mult = 1; 
         updSel();
     } 
     render(); 
     checkWin();
+    saveGame();
 }
 
 function undo() {
     if (!hist.length) return; 
     
-    // Completely restore snapshot including game layout states
-    let lastState = JSON.parse(hist.pop());
+    let lastState = hist.pop();
     players = lastState.players;
     cur = lastState.cur;
     darts = lastState.darts;
     mult = lastState.mult;
     roundCounter = lastState.roundCounter;
 
-    document.getElementById('banner').style.display = 'none'; // Hide banner if win undone
+    document.getElementById('banner').style.display = 'none'; 
     updSel();
     render(); 
+    saveGame();
 } 
+
+function newGame() {
+    if (confirm("Are you sure you want to exit and start a new game?")) {
+        localStorage.removeItem("cricketTacticsSave");
+        document.getElementById('game').style.display = 'none';
+        document.getElementById('banner').style.display = 'none';
+        document.getElementById('setup').style.display = 'block';
+    }
+}
 
 function closed(pl) {
     return targets.every(t => pl.marks[t] >= 3);
@@ -194,6 +218,7 @@ function checkWin() {
 } 
 
 function render() {
+    if (!players.length) return;
     document.getElementById('turn').textContent = `Round ${roundCounter} — ${players[cur].name}'s Turn (Dart ${darts + 1})`; 
     
     let h = '<table><tr><th>Player</th><th>Pts</th>'; 
@@ -208,6 +233,39 @@ function render() {
     h += '</table>'; 
     document.getElementById('score').innerHTML = h; 
 } 
+
+function saveGame() {
+    localStorage.setItem("cricketTacticsSave", JSON.stringify({
+        players,
+        cur,
+        darts,
+        mult,
+        roundCounter,
+        hist
+    }));
+}
+
+function loadGame() {
+    const data = localStorage.getItem("cricketTacticsSave");
+    if (!data) return;
+    
+    const obj = JSON.parse(data);
+    players = obj.players || [];
+    cur = obj.cur || 0;
+    darts = obj.darts || 0;
+    mult = obj.mult || 1;
+    roundCounter = obj.roundCounter || 1;
+    hist = obj.hist || [];
+    
+    if (players.length > 0) {
+        document.getElementById('setup').style.display = 'none';
+        document.getElementById('game').style.display = 'block';
+        initTargetButtons();
+        updSel();
+        render();
+        checkWin();
+    }
+}
 </script> 
 </body>
 </html>
