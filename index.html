@@ -3,7 +3,24 @@
 <html><head><meta charset="utf-8"><title>Tactics Cricket Darts</title>
 <style>
 body{font-family:Arial;margin:20px;background:#f5f5f5}
-button{margin:2px;padding:8px 10px}
+button {
+  margin: 6px;           /* Increased from 2px for better spacing */
+  padding: 15px 20px;    /* Increased from 8px 10px for a larger touch area */
+  font-size: 18px;       /* Added to make the labels easier to read */
+  min-width: 60px;       /* Ensures a consistent, easy-to-hit width */
+  cursor: pointer;
+}
+ #nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;        /* Adds consistent spacing between buttons */
+  margin-bottom: 20px;
+}
+
+#nums button {
+  flex: 1 1 60px;   /* Allows buttons to grow and fill rows, with a 60px base */
+  max-width: 100px; /* Prevents buttons from becoming awkwardly wide on tablets */
+}
 #banner{display:none;background:gold;padding:15px;font-size:28px;font-weight:bold;margin:10px 0}
 table{border-collapse:collapse}td,th{border:1px solid #999;padding:4px 6px;text-align:center}
 </style></head><body>
